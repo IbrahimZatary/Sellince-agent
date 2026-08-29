@@ -17,6 +17,7 @@ from app.models import (
     Conversation,
     Message,
     Offer,
+    RefreshToken,
 )
 
 
