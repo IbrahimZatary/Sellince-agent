@@ -13,6 +13,8 @@ import CompanyInfo from '../../pages/onboarding/CompanyInfo';
 import AgentBehavior from '../../pages/onboarding/AgentBehavior';
 import Completion from '../../pages/onboarding/Completion';
 
+import Dashboard from '../../pages/dashboard/Dashboard';
+
 // Placeholder Pages for future phases
 const PlaceholderPage = ({ title }) => (
   <div className="p-8">
@@ -28,7 +30,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'dashboard',
-        element: <PlaceholderPage title="Dashboard" />,
+        element: <Dashboard />,
       },
       {
         path: 'conversations',
