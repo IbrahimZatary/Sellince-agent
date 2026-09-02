@@ -1,7 +1,19 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import AppLayout from '../../components/layout/AppLayout';
 
-// Pages placeholders
+// Layouts
+import AppLayout from '../../components/layout/AppLayout';
+import OnboardingLayout from '../../components/layout/OnboardingLayout';
+
+// Auth Pages
+import Login from '../../pages/auth/Login';
+import Signup from '../../pages/auth/Signup';
+
+// Onboarding Pages
+import CompanyInfo from '../../pages/onboarding/CompanyInfo';
+import AgentBehavior from '../../pages/onboarding/AgentBehavior';
+import Completion from '../../pages/onboarding/Completion';
+
+// Placeholder Pages for future phases
 const PlaceholderPage = ({ title }) => (
   <div className="p-8">
     <h1 className="text-2xl font-bold mb-4">{title}</h1>
@@ -36,32 +48,33 @@ const router = createBrowserRouter([
       },
       {
         path: 'demo',
-        element: <PlaceholderPage title="Product Demo" />,
+        element: <PlaceholderPage title="Product Demo (Walkthrough)" />,
       },
     ],
   },
   {
     path: '/login',
-    element: <PlaceholderPage title="Login" />,
+    element: <Login />,
   },
   {
     path: '/signup',
-    element: <PlaceholderPage title="Signup" />,
+    element: <Signup />,
   },
   {
     path: '/onboarding',
+    element: <OnboardingLayout />,
     children: [
       {
         path: 'company',
-        element: <PlaceholderPage title="Company Info" />,
+        element: <CompanyInfo />,
       },
       {
         path: 'agent',
-        element: <PlaceholderPage title="Agent Behavior" />,
+        element: <AgentBehavior />,
       },
       {
         path: 'complete',
-        element: <PlaceholderPage title="Onboarding Complete" />,
+        element: <Completion />,
       }
     ]
   }
