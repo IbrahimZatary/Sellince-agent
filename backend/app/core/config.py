@@ -13,8 +13,10 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: str = "lax"
     SQL_ECHO: bool = False
 
-    model_config = SettingsConfigDict(env_file=".env")
-
+    model_config = SettingsConfigDict(
+    env_file=".env",
+    extra="ignore",
+)
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
