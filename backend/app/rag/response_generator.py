@@ -70,3 +70,47 @@ def generate_response(
     response = llm.invoke(messages)
 
     return str(response.content)
+
+
+
+def generate_stage_response(
+    stage: str,
+    customer_context: dict,
+    product_info: dict,
+    customer_message: str,
+) -> str:
+    llm = get_llm()
+
+    messages = [
+        SystemMessage(
+            content=f"""
+You are a telecom sales assistant.
+
+Current conversation stage: {stage}
+
+Rules:
+- Use only the provided customer and product information.
+- All prices are in JOD.
+- Never invent prices, discounts, features, or benefits.
+- Never claim that a plan has already been activated.
+- Respond according to the current conversation stage.
+
+Stage behavior:
+- EXPLAIN_OFFER: explain the retrieved product clearly.
+- HANDLE_OBJECTION: address the customer's concern without inventing discounts or features.
+- CLOSE_DEAL: confirm the customer's interest and prepare them for the next step.
+- ROUTE_TO_PAYMENT: tell the customer they can continue to the payment step.
+"""
+        ),
+        HumanMessage(
+            content=(
+                f"Customer message:\n{customer_message}\n\n"
+                f"Customer context:\n{_format_dict(customer_context)}\n\n"
+                f"Product information:\n{_format_dict(product_info)}"
+            )
+        ),
+    ]
+
+    response = llm.invoke(messages)
+
+    return str(response.content)

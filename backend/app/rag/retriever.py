@@ -18,8 +18,10 @@ def search_products(query: str) -> dict:
     product = results[0]
 
     return {
+        "product_id": product.metadata["product_id"],
         "product_name": product.metadata["name"],
         "price": product.metadata["price"],
         "description": product.metadata["description"],
+        "features": product.metadata["features"],
         "target_segment": product.metadata["target_segment"],
     }

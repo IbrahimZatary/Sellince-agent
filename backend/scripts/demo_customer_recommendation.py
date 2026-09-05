@@ -7,7 +7,7 @@ def main():
     db = SessionLocal()
 
     try:
-        customer_name = "Ahmed"
+        customer_name = "YOUSEF AL-OMARI"
 
         print(f"Searching for customer: {customer_name}")
 

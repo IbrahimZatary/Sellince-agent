@@ -1,15 +1,6 @@
 from agent_state import AgentState
 
-# STUB so the pipeline can be tested before Mariam's RAG module exists.
-# Once she delivers it, delete this stub and replace with:
-#   from mariam_rag import search_products
-def search_products(query: str) -> dict:
-    return {
-        "product_name": "50GB Data Plan",
-        "price": 25,
-        "description": "50GB data with 5G speed and unlimited calls",
-        "target_segment": "Heavy User",
-    }
+from app.rag.customer_recommendation import recommend_product_for_customer
 
 
 def recommend_node(state: AgentState) -> AgentState:
@@ -17,16 +8,26 @@ def recommend_node(state: AgentState) -> AgentState:
         state["recommendation"] = None
         return state
 
-    intent = state.get("intent") or {}
-    explicit_needs = intent.get("needs") if isinstance(intent, dict) else None
-
-    should_recommend = bool(state["trigger_reason"]) or bool(explicit_needs)
-
-    if not should_recommend:
-        state["recommendation"] = None
+    # In a multi-turn conversation, keep the existing recommendation
+    # unless we explicitly decide to replace it later.
+    existing_recommendation = state.get("recommendation")
+    if existing_recommendation:
         return state
 
-    query = state["trigger_reason"] or (explicit_needs[0] if explicit_needs else state["customer_data"]["segment"])
-    primary = search_products(query)
-    state["recommendation"] = {"primary": primary, "alternative": None}
+    customer_data = state["customer_data"]
+
+    class CustomerContext:
+        def __init__(self, data: dict):
+            self.usage_percentage = data["usage_percentage"]
+            self.segment = data.get("segment")
+
+    customer_context = CustomerContext(customer_data)
+
+    primary = recommend_product_for_customer(customer_context)
+
+    state["recommendation"] = {
+        "primary": primary,
+        "alternative": None,
+    }
+
     return state

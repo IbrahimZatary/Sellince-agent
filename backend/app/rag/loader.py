@@ -9,6 +9,7 @@ REQUIRED_FIELDS = {
     "product_id",
     "name",
     "description",
+    "features",
     "price",
     "target_segment",
 }
@@ -28,13 +29,22 @@ def load_product_documents() -> list[Document]:
             product_id = product.get("product_id", "Unknown ID")
 
             raise ValueError(
-                f"Product '{product_name}' (ID: {product_id}) "
-                f"is missing required fields: {sorted(missing_fields)}"
+                f"Product '{product_name}' "
+                f"(ID: {product_id}) is missing required fields: "
+                f"{sorted(missing_fields)}"
+            )
+
+        features = product["features"]
+
+        if not isinstance(features, list) or not features:
+            raise ValueError(
+                f"Product '{product['name']}' must have a non-empty features list."
             )
 
         page_content = (
             f"{product['name']}. "
             f"{product['description']} "
+            f"Features: {', '.join(features)}. "
             f"Target segment: {product['target_segment']}."
         )
 
@@ -43,8 +53,9 @@ def load_product_documents() -> list[Document]:
             metadata={
                 "product_id": product["product_id"],
                 "name": product["name"],
-                "price": product["price"],
                 "description": product["description"],
+                "features": features,
+                "price": product["price"],
                 "target_segment": product["target_segment"],
             },
         )
