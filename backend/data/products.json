@@ -1,0 +1,62 @@
+[
+  {
+    "product_id": 1,
+    "name": "50GB Data Plan",
+    "description": "50GB data with 5G speed, unlimited calls, and free streaming.",
+    "features": [
+      "5G speed",
+      "Unlimited calls",
+      "Free streaming"
+    ],
+    "price": 25,
+    "target_segment": "Heavy User"
+  },
+  {
+    "product_id": 2,
+    "name": "20GB Data Plan",
+    "description": "20GB data with 4G speed and standard calls.",
+    "features": [
+      "20GB data",
+      "4G speed",
+      "Standard calls"
+    ],
+    "price": 15,
+    "target_segment": "Average User"
+  },
+  {
+    "product_id": 3,
+    "name": "5GB Data Plan",
+    "description": "5GB data with 4G speed for light users.",
+    "features": [
+      "5GB data",
+      "4G speed",
+      "Designed for light users"
+    ],
+    "price": 8,
+    "target_segment": "Low Active"
+  },
+  {
+    "product_id": 4,
+    "name": "Business Plan",
+    "description": "Custom plan for businesses with multiple lines and priority support.",
+    "features": [
+      "Custom business plan",
+      "Multiple lines",
+      "Priority support"
+    ],
+    "price": 50,
+    "target_segment": "Business"
+  },
+  {
+    "product_id": 5,
+    "name": "Entertainment Pack",
+    "description": "Add-on for streaming and gaming subscriptions.",
+    "features": [
+      "Streaming subscriptions",
+      "Gaming subscriptions",
+      "Entertainment add-on"
+    ],
+    "price": 5,
+    "target_segment": "Heavy User"
+  }
+]

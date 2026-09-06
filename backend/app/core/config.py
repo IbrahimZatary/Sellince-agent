@@ -1,3 +1,4 @@
+﻿from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,8 +13,12 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = True
     COOKIE_SAMESITE: str = "lax"
     SQL_ECHO: bool = False
+    GROQ_API_KEY: Optional[str] = None
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+    )
 
     @property
     def cors_origins_list(self) -> list[str]:

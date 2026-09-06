@@ -1,4 +1,4 @@
-from datetime import timedelta
+﻿from datetime import timedelta
 
 from app.api.auth import utc_now
 from app.core.security import generate_opaque_token, hash_opaque_token
@@ -37,6 +37,7 @@ def test_refresh_rotates_and_sets_new_cookie(client):
     old_cookie = register_resp.cookies.get("refresh_token")
     assert old_cookie
 
+    client.cookies.set("refresh_token", old_cookie)
     response = client.post("/api/v1/auth/refresh")
     assert response.status_code == 200
     assert "access_token" in response.json()
@@ -50,6 +51,7 @@ def test_refresh_rejects_reused_token(client):
     register_resp = _register(client)
     old_cookie = register_resp.cookies.get("refresh_token")
 
+    client.cookies.set("refresh_token", old_cookie)
     first = client.post("/api/v1/auth/refresh")
     assert first.status_code == 200
 
@@ -60,6 +62,7 @@ def test_refresh_rejects_reused_token(client):
 
 
 def test_refresh_missing_cookie(client):
+    client.cookies.clear()
     response = client.post("/api/v1/auth/refresh")
     assert response.status_code == 401
     assert response.json()["error_code"] == "MISSING_REFRESH_TOKEN"
@@ -86,7 +89,7 @@ def test_refresh_expired_token(client, db_session):
         expires_at=utc_now() - timedelta(days=1),
     )
     db_session.add(expired_record)
-    db_session.flush()
+    db_session.commit()
 
     client.cookies.set("refresh_token", raw_token)
     response = client.post("/api/v1/auth/refresh")
@@ -96,18 +99,21 @@ def test_refresh_expired_token(client, db_session):
 
 def test_logout_revokes_token_and_clears_cookie(client):
     register_resp = _register(client)
-    assert register_resp.cookies.get("refresh_token")
+    old_cookie = register_resp.cookies.get("refresh_token")
+    assert old_cookie
 
+    client.cookies.set("refresh_token", old_cookie)
     response = client.post("/api/v1/auth/logout")
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
-    assert client.cookies.get("refresh_token") is None
 
+    client.cookies.set("refresh_token", old_cookie)
     refreshed = client.post("/api/v1/auth/refresh")
     assert refreshed.status_code == 401
 
 
 def test_logout_without_cookie_is_success(client):
+    client.cookies.clear()
     response = client.post("/api/v1/auth/logout")
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"

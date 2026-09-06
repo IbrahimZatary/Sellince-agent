@@ -1,9 +1,25 @@
+﻿# Environment & Virtualenv
 .env
 venv/
+env/
+ENV/
+
+# Python bytecode & cache
 __pycache__/
-*.pyc
-*.db
+*.py[cod]
+*$py.class
 .pytest_cache/
-.DS_Store
-.idea/
+.coverage
+htmlcov/
+
+# Local databases
+*.db
+*.sqlite3
+test_database.db
+
+# IDE & Editor
 .vscode/
+.idea/
+*.swp
+
+chroma_db/

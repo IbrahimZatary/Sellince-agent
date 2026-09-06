@@ -1,0 +1,47 @@
+﻿[
+  {
+    "customer_id": 1,
+    "name": "Ahmed Al-Fayez",
+    "phone": "0791111111",
+    "current_plan": "20GB Data Plan",
+    "usage_percentage": 92,
+    "contract_end_date": "2026-12-31",
+    "segment": "Heavy User"
+  },
+  {
+    "customer_id": 2,
+    "name": "Layla Hassan",
+    "phone": "0792222222",
+    "current_plan": "10GB Data Plan",
+    "usage_percentage": 45,
+    "contract_end_date": "2027-06-30",
+    "segment": "Average User"
+  },
+  {
+    "customer_id": 3,
+    "name": "Omar Khaled",
+    "phone": "0793333333",
+    "current_plan": "Prepaid Plan",
+    "usage_percentage": 15,
+    "contract_end_date": null,
+    "segment": "Low Active"
+  },
+  {
+    "customer_id": 4,
+    "name": "Noor Ibrahim",
+    "phone": "0794444444",
+    "current_plan": "50GB Data Plan",
+    "usage_percentage": 78,
+    "contract_end_date": "2026-09-15",
+    "segment": "Heavy User"
+  },
+  {
+    "customer_id": 5,
+    "name": "Sara Ali",
+    "phone": "0795555555",
+    "current_plan": "5GB Data Plan",
+    "usage_percentage": 95,
+    "contract_end_date": "2026-11-30",
+    "segment": "Heavy User"
+  }
+]
