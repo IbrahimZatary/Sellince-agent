@@ -7,17 +7,26 @@ try:
 except ImportError:
     Groq = None
 
+_GROQ_CLIENT = None
+
+def _get_client():
+    global _GROQ_CLIENT
+    if _GROQ_CLIENT is None and Groq:
+        api_key = os.getenv("GROQ_API_KEY")
+        if api_key:
+            _GROQ_CLIENT = Groq(api_key=api_key)
+    return _GROQ_CLIENT
+
 
 def understand_node(state: AgentState) -> AgentState:
     """Stage 2: UNDERSTAND Node powered by Groq.
     Extracts structured intent (needs, questions, objections) from user message.
     """
     message = state.get("message") or ""
-    api_key = os.getenv("GROQ_API_KEY")
+    client = _get_client()
 
-    if Groq and api_key:
+    if client:
         try:
-            client = Groq(api_key=api_key)
             prompt = f"""
 Analyze this telecom customer message and extract their intent into a JSON object:
 Message: "{message}"

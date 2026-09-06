@@ -7,6 +7,16 @@ try:
 except ImportError:
     Groq = None
 
+_GROQ_CLIENT = None
+
+def _get_client():
+    global _GROQ_CLIENT
+    if _GROQ_CLIENT is None and Groq:
+        api_key = os.getenv("GROQ_API_KEY")
+        if api_key:
+            _GROQ_CLIENT = Groq(api_key=api_key)
+    return _GROQ_CLIENT
+
 
 def respond_node(state: AgentState) -> AgentState:
     """Stage 4: RESPOND Node powered by Groq.
@@ -17,7 +27,7 @@ def respond_node(state: AgentState) -> AgentState:
     trigger = state.get("trigger_reason")
     primary_offer = recommendation.get("primary")
     message = state.get("message") or ""
-    api_key = os.getenv("GROQ_API_KEY")
+    client = _get_client()
 
     customer_name = customer["name"] if customer else "valued customer"
     current_plan = customer.get("current_plan", "current plan") if customer else ""
@@ -45,9 +55,8 @@ def respond_node(state: AgentState) -> AgentState:
     offer_desc = primary_offer.get("description", "")
 
     # Attempt LLM pitch generation with Groq
-    if Groq and api_key:
+    if client:
         try:
-            client = Groq(api_key=api_key)
             system_prompt = (
                 "You are an expert, professional sales AI for a telecom provider. "
                 "Craft a concise (1-2 sentences max), highly personalized message to the customer. "
