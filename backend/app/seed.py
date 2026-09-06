@@ -41,24 +41,29 @@ USERS = [
 ]
 
 CUSTOMERS = [
+    # ---- Orange (8) ----
     {"company": "Orange", "name": "Ahmed Al-Fayez", "phone": "0791111111", "current_plan": "20GB Data Plan", "usage_percentage": "92.00", "contract_end_date": "2026-12-31", "segment": "Heavy User"},
-    {"company": "Orange", "name": "Layla Hassan", "phone": "0792222222", "current_plan": "10GB Data Plan", "usage_percentage": "45.00", "contract_end_date": "2027-06-30", "segment": "Average User"},
-    {"company": "Orange", "name": "Omar Khaled", "phone": "0793333333", "current_plan": "Prepaid Plan", "usage_percentage": "15.00", "contract_end_date": None, "segment": "Low Active"},
-    {"company": "Zain", "name": "Noor Ibrahim", "phone": "0794444444", "current_plan": "50GB Data Plan", "usage_percentage": "78.00", "contract_end_date": "2026-09-15", "segment": "Heavy User"},
+    {"company": "Orange", "name": "Ali Hassan", "phone": "0796666666", "current_plan": "30GB Data Plan", "usage_percentage": "90.00", "contract_end_date": "2027-02-28", "segment": "Heavy User"},
+    {"company": "Orange", "name": "Fadi Mansour", "phone": "0799999999", "current_plan": "40GB Data Plan", "usage_percentage": "100.00", "contract_end_date": "2026-11-30", "segment": "Heavy User"},
+    {"company": "Orange", "name": "Rami Saleh", "phone": "0791010101", "current_plan": "25GB Data Plan", "usage_percentage": "95.00", "contract_end_date": "2026-09-20", "segment": "Heavy User"},
+    {"company": "Orange", "name": "Layla Hassan", "phone": "0792222222", "current_plan": "10GB Data Plan", "usage_percentage": "85.00", "contract_end_date": "2026-09-10", "segment": "Average User"},
+    {"company": "Orange", "name": "Omar Khaled", "phone": "0793333333", "current_plan": "Prepaid Plan", "usage_percentage": "15.00", "contract_end_date": None, "segment": "Heavy User"},
+    {"company": "Orange", "name": "Dina Haddad", "phone": "0792020202", "current_plan": "8GB Data Plan", "usage_percentage": "25.00", "contract_end_date": "2026-10-07", "segment": "Average User"},
+    {"company": "Orange", "name": "Mona Adel", "phone": "0797777777", "current_plan": "10GB Data Plan", "usage_percentage": "40.00", "contract_end_date": "2027-08-15", "segment": "Average User"},
+    # ---- Zain (4) ----
     {"company": "Zain", "name": "Sara Ali", "phone": "0795555555", "current_plan": "5GB Data Plan", "usage_percentage": "95.00", "contract_end_date": "2026-11-30", "segment": "Heavy User"},
+    {"company": "Zain", "name": "Noor Ibrahim", "phone": "0794444444", "current_plan": "50GB Data Plan", "usage_percentage": "78.00", "contract_end_date": "2026-09-15", "segment": "Heavy User"},
+    {"company": "Zain", "name": "Tariq Nasser", "phone": "0798888888", "current_plan": "Prepaid Plan", "usage_percentage": "20.00", "contract_end_date": None, "segment": "Heavy User"},
+    {"company": "Zain", "name": "Huda Salem", "phone": "0793030303", "current_plan": "12GB Data Plan", "usage_percentage": "30.00", "contract_end_date": "2027-06-30", "segment": "Average User"},
 ]
 
-LARGE_EXTRAS = [
-    {"company": "Orange", "name": "Ali Hassan", "phone": "0796666666", "current_plan": "30GB Data Plan", "usage_percentage": "90.00", "contract_end_date": "2027-02-28", "segment": "Heavy User"},
-    {"company": "Orange", "name": "Mona Adel", "phone": "0797777777", "current_plan": "10GB Data Plan", "usage_percentage": "40.00", "contract_end_date": "2026-10-31", "segment": "Average User"},
-    {"company": "Zain", "name": "Tariq Nasser", "phone": "0798888888", "current_plan": "20GB Data Plan", "usage_percentage": "70.00", "contract_end_date": "2027-04-30", "segment": "Heavy User"},
-]
+LARGE_EXTRAS = []
 
 # Indexes into CUSTOMERS per --scale; "large" also appends LARGE_EXTRAS.
 SCALE_CUSTOMER_INDEXES = {
-    "small": [0, 1, 3],
-    "medium": [0, 1, 2, 3, 4],
-    "large": [0, 1, 2, 3, 4],
+    "small": [0, 4, 5, 8, 9, 10],
+    "medium": list(range(12)),
+    "large": list(range(12)),
 }
 
 # Per customer: conversation + message thread + optional offer.
@@ -158,6 +163,54 @@ SCENARIOS = {
             ("system", "Offer sent to customer.", 30),
         ],
         "offer": {"product_name": "100GB Premium Plan", "price": "45.00", "status": "sent", "hours_after_start": 1, "confirm_days_after": None},
+    },
+    "Fadi Mansour": {
+        "status": "open",
+        "started_days_ago": 1,
+        "closed_after_hours": None,
+        "messages": [
+            ("customer", "I'm at my cap again, this month has been rough.", 0),
+            ("ai_agent", "Fadi, you're at {usage}% of your {plan}. The 100GB Premium Plan at $45 would end the cap anxiety for good.", 5),
+            ("customer", "Go ahead and send it over.", 25),
+            ("system", "Offer sent to customer.", 30),
+        ],
+        "offer": {"product_name": "100GB Premium Plan", "price": "45.00", "status": "sent", "hours_after_start": 1, "confirm_days_after": None},
+    },
+    "Rami Saleh": {
+        "status": "open",
+        "started_days_ago": 4,
+        "closed_after_hours": None,
+        "messages": [
+            ("customer", "My contract is up soon and I'm hitting the data cap.", 0),
+            ("ai_agent", "Rami, you're at {usage}% of your {plan} with your contract ending shortly. The 50GB Data Plan at $25 covers both.", 5),
+            ("customer", "That works, let's do it.", 20),
+            ("system", "Offer sent to customer.", 25),
+        ],
+        "offer": {"product_name": "50GB Data Plan", "price": "25.00", "status": "sent", "hours_after_start": 1, "confirm_days_after": None},
+    },
+    "Dina Haddad": {
+        "status": "closed",
+        "started_days_ago": 6,
+        "closed_after_hours": 24,
+        "messages": [
+            ("customer", "Just checking my balance please.", 0),
+            ("ai_agent", "Dina, you're at {usage}% of your {plan}. You're all set, anything else?", 3),
+            ("customer", "All good, thanks!", 8),
+            ("system", "Conversation closed.", 12),
+        ],
+        "offer": None,
+    },
+    "Huda Salem": {
+        "status": "closed",
+        "started_days_ago": 9,
+        "closed_after_hours": 40,
+        "messages": [
+            ("customer", "Can you help me understand roaming charges?", 0),
+            ("ai_agent", "Huda, I can see you're at {usage}% of your {plan}. Roaming fees apply outside Jordan - I'd suggest our travel add-on.", 4),
+            ("customer", "Got it, thank you.", 15),
+            ("system", "Conversation closed.", 20),
+        ],
+        "offer": None,
     },
 }
 
