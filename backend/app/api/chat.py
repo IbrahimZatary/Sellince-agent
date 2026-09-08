@@ -35,8 +35,6 @@ def chat(
     )
     return ChatResponse(
         response=result["response"],
-        offer=result["recommendation"]["primary"]
-        if result["recommendation"]
-        else None,
+        offer=result["offer"],
         action=result["action"],
     )

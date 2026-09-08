@@ -9,5 +9,6 @@ class AgentState(TypedDict):
     intent: Optional[dict]
     recommendation: Optional[dict]
     response: Optional[str]
+    offer: Optional[dict]
     action: Optional[str]
-    _db: Optional[Any] 
+    _db: Optional[Any]
