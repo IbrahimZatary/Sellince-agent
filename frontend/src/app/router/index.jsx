@@ -14,6 +14,7 @@ import AgentBehavior from '../../pages/onboarding/AgentBehavior';
 import Completion from '../../pages/onboarding/Completion';
 
 import Dashboard from '../../pages/dashboard/Dashboard';
+import Conversations from '../../pages/conversations/Conversations';
 import ProtectedRoute from './ProtectedRoute';
 
 // Placeholder Pages for future phases
@@ -38,7 +39,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'conversations',
-            element: <PlaceholderPage title="Conversations" />,
+            element: <Conversations />,
           },
           {
             path: 'agent',
