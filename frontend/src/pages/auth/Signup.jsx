@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { signup } from '../../services/api/auth.api';
+import { tokenStore } from '../../services/api/tokenStore';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -28,11 +29,13 @@ export default function Signup() {
     }
 
     try {
-      await signup(formData);
+      const data = await signup(formData);
+      tokenStore.set(data.access_token);
       // Navigate to the next step in onboarding
       navigate('/onboarding/agent');
     } catch (err) {
-      setError('An error occurred during signup');
+      const detail = err.response?.data?.detail?.[0]?.msg;
+      setError(err.response?.data?.message || detail || 'An error occurred during signup');
     } finally {
       setIsLoading(false);
     }

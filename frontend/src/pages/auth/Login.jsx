@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { login } from '../../services/api/auth.api';
+import { tokenStore } from '../../services/api/tokenStore';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,11 +18,12 @@ export default function Login() {
     setError('');
 
     try {
-      await login(formData);
+      const data = await login(formData);
+      tokenStore.set(data.access_token);
       // Navigate to dashboard after successful login
       navigate('/dashboard');
     } catch (err) {
-      setError('Invalid email or password');
+      setError(err.response?.data?.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }
