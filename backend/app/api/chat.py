@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -5,11 +7,21 @@ from app.agent.graph import compiled_graph
 from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AppException
+from app.models.conversation import Conversation
 from app.models.customer import Customer
+from app.models.message import Message
+from app.models.offer import Offer
 from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+
+def _to_decimal(value) -> Decimal | None:
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
 
 
 @router.post("", response_model=ChatResponse)
@@ -33,6 +45,59 @@ def chat(
             "_db": db,
         }
     )
+
+    # Persist the exchange so the inbox + dashboard reflect it.
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.customer_id == req.customer_id,
+            Conversation.company_id == current_user.company_id,
+            Conversation.status == "open",
+        )
+        .order_by(Conversation.started_at.desc())
+        .first()
+    )
+    if not conversation:
+        conversation = Conversation(
+            customer_id=req.customer_id,
+            company_id=current_user.company_id,
+            status="open",
+        )
+        db.add(conversation)
+        db.flush()
+
+    db.add_all(
+        [
+            Message(
+                conversation_id=conversation.id,
+                sender="customer",
+                text=req.message,
+            ),
+            Message(
+                conversation_id=conversation.id,
+                sender="agent",
+                text=result["response"],
+            ),
+        ]
+    )
+
+    offer = result.get("offer")
+    if offer:
+        price = _to_decimal(offer.get("price"))
+        if price is not None:
+            db.add(
+                Offer(
+                    customer_id=req.customer_id,
+                    conversation_id=conversation.id,
+                    company_id=current_user.company_id,
+                    product_name=str(offer.get("product") or "Special Offer"),
+                    price=price,
+                    status="sent",
+                )
+            )
+
+    db.commit()
+
     return ChatResponse(
         response=result["response"],
         offer=result["offer"],
