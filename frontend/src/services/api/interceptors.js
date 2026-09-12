@@ -1,12 +1,13 @@
+import { tokenStore } from './tokenStore';
+
 export const setupInterceptors = (apiClient) => {
-  // Request Interceptor
+  // Request Interceptor: attach the access token to every call
   apiClient.interceptors.request.use(
     (config) => {
-      // Future JWT injection:
-      // const token = localStorage.getItem('token');
-      // if (token) {
-      //   config.headers.Authorization = `Bearer ${token}`;
-      // }
+      const token = tokenStore.get();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
       return config;
     },
     (error) => {
@@ -14,17 +15,34 @@ export const setupInterceptors = (apiClient) => {
     }
   );
 
-  // Response Interceptor
+  // Response Interceptor: on 401 try to refresh the session once, then retry
   apiClient.interceptors.response.use(
     (response) => {
       return response;
     },
-    (error) => {
-      // Centralized error normalization
-      // if (error.response?.status === 401) {
-      //   // Handle unauthorized (e.g., clear token, redirect to login)
-      // }
-      return Promise.reject(error);
+    async (error) => {
+      const original = error.config;
+      const skipRetry =
+        error.response?.status !== 401 ||
+        original?._retry ||
+        original?.url?.includes('/auth/login') ||
+        original?.url?.includes('/auth/refresh');
+
+      if (skipRetry) {
+        return Promise.reject(error);
+      }
+
+      original._retry = true;
+      try {
+        const { data } = await apiClient.post('/auth/refresh');
+        tokenStore.set(data.access_token);
+        original.headers.Authorization = `Bearer ${data.access_token}`;
+        return apiClient(original);
+      } catch (refreshError) {
+        tokenStore.clear();
+        window.location.assign('/login');
+        return Promise.reject(refreshError);
+      }
     }
   );
 };
