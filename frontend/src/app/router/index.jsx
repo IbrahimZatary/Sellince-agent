@@ -15,6 +15,7 @@ import Completion from '../../pages/onboarding/Completion';
 
 import Dashboard from '../../pages/dashboard/Dashboard';
 import Conversations from '../../pages/conversations/Conversations';
+import AgentChat from '../../pages/agent/AgentChat';
 import ProtectedRoute from './ProtectedRoute';
 
 // Placeholder Pages for future phases
@@ -43,7 +44,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'agent',
-            element: <PlaceholderPage title="AI Agent" />,
+            element: <AgentChat />,
           },
           {
             path: 'analytics',
