@@ -14,6 +14,7 @@ import AgentBehavior from '../../pages/onboarding/AgentBehavior';
 import Completion from '../../pages/onboarding/Completion';
 
 import Dashboard from '../../pages/dashboard/Dashboard';
+import ProtectedRoute from './ProtectedRoute';
 
 // Placeholder Pages for future phases
 const PlaceholderPage = ({ title }) => (
@@ -29,28 +30,33 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        path: 'dashboard',
-        element: <Dashboard />,
-      },
-      {
-        path: 'conversations',
-        element: <PlaceholderPage title="Conversations" />,
-      },
-      {
-        path: 'agent',
-        element: <PlaceholderPage title="AI Agent" />,
-      },
-      {
-        path: 'analytics',
-        element: <PlaceholderPage title="Analytics" />,
-      },
-      {
-        path: 'settings',
-        element: <PlaceholderPage title="Settings" />,
-      },
-      {
-        path: 'demo',
-        element: <PlaceholderPage title="Product Demo (Walkthrough)" />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: 'dashboard',
+            element: <Dashboard />,
+          },
+          {
+            path: 'conversations',
+            element: <PlaceholderPage title="Conversations" />,
+          },
+          {
+            path: 'agent',
+            element: <PlaceholderPage title="AI Agent" />,
+          },
+          {
+            path: 'analytics',
+            element: <PlaceholderPage title="Analytics" />,
+          },
+          {
+            path: 'settings',
+            element: <PlaceholderPage title="Settings" />,
+          },
+          {
+            path: 'demo',
+            element: <PlaceholderPage title="Product Demo (Walkthrough)" />,
+          },
+        ],
       },
     ],
   },
@@ -67,19 +73,24 @@ const router = createBrowserRouter([
     element: <OnboardingLayout />,
     children: [
       {
-        path: 'company',
-        element: <CompanyInfo />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: 'company',
+            element: <CompanyInfo />,
+          },
+          {
+            path: 'agent',
+            element: <AgentBehavior />,
+          },
+          {
+            path: 'complete',
+            element: <Completion />,
+          },
+        ],
       },
-      {
-        path: 'agent',
-        element: <AgentBehavior />,
-      },
-      {
-        path: 'complete',
-        element: <Completion />,
-      }
-    ]
-  }
+    ],
+  },
 ]);
 
 export default function AppRouter() {

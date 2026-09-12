@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { signup } from '../../services/api/auth.api';
-import { tokenStore } from '../../services/api/tokenStore';
+import { useAuth } from '../../app/providers/AuthContext';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     companyName: '',
     email: '',
@@ -29,8 +29,7 @@ export default function Signup() {
     }
 
     try {
-      const data = await signup(formData);
-      tokenStore.set(data.access_token);
+      await signUp(formData);
       // Navigate to the next step in onboarding
       navigate('/onboarding/agent');
     } catch (err) {

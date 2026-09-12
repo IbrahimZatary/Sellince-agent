@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { login } from '../../services/api/auth.api';
-import { tokenStore } from '../../services/api/tokenStore';
+import { useAuth } from '../../app/providers/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,8 +18,7 @@ export default function Login() {
     setError('');
 
     try {
-      const data = await login(formData);
-      tokenStore.set(data.access_token);
+      await signIn(formData);
       // Navigate to dashboard after successful login
       navigate('/dashboard');
     } catch (err) {
