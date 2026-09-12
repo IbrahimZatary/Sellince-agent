@@ -28,3 +28,8 @@ export const me = async () => {
 export const logout = async () => {
   await apiClient.post('/auth/logout');
 };
+
+export const updateMe = async (payload) => {
+  const { data } = await apiClient.patch('/auth/me', payload);
+  return data;
+};

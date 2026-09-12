@@ -16,6 +16,7 @@ import Completion from '../../pages/onboarding/Completion';
 import Dashboard from '../../pages/dashboard/Dashboard';
 import Conversations from '../../pages/conversations/Conversations';
 import AgentChat from '../../pages/agent/AgentChat';
+import Settings from '../../pages/settings/Settings';
 import ProtectedRoute from './ProtectedRoute';
 
 // Placeholder Pages for future phases
@@ -52,7 +53,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'settings',
-            element: <PlaceholderPage title="Settings" />,
+            element: <Settings />,
           },
           {
             path: 'demo',

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { login, logout, me, signup } from '../../services/api/auth.api';
+import { login, logout, me, signup, updateMe } from '../../services/api/auth.api';
 import { tokenStore } from '../../services/api/tokenStore';
 
 const AuthContext = createContext(null);
@@ -58,8 +58,14 @@ export function AuthProvider({ children }) {
     setStatus('unauthenticated');
   }, []);
 
+  const updateProfile = useCallback(async (payload) => {
+    const updated = await updateMe(payload);
+    setUser(updated);
+    return updated;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, status, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, status, signIn, signUp, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

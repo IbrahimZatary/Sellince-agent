@@ -3,19 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../app/providers/AuthContext';
+
+const SECTORS = [
+  { value: 'telecom', label: 'Telecom' },
+  { value: 'banking', label: 'Banking' },
+];
+
+const PLANS = [
+  { value: 'pilot', label: 'Pilot' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'enterprise', label: 'Enterprise' },
+];
 
 export default function CompanyInfo() {
   const navigate = useNavigate();
+  const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState({
-    website: '',
-    teamSize: '1-10',
-    primaryGoal: ''
+    companyName: user?.company_name || '',
+    sector: user?.sector || 'telecom',
+    subscriptionTier: user?.subscription_tier || 'standard',
   });
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate saving company info
-    navigate('/onboarding/agent');
+    setSaving(true);
+    setError('');
+    try {
+      await updateProfile({
+        company_name: formData.companyName,
+        sector: formData.sector,
+        subscription_tier: formData.subscriptionTier,
+      });
+      navigate('/onboarding/agent');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not save company details. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -27,37 +54,52 @@ export default function CompanyInfo() {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            label="Company Website"
-            type="url"
-            value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            placeholder="https://www.example.com"
+            label="Company Name"
+            required
+            value={formData.companyName}
+            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+            placeholder="e.g. Orange Jordan"
           />
 
           <div className="flex flex-col mb-4">
-            <label className="mb-1.5 text-sm font-medium text-[var(--color-text-main)]">Team Size</label>
+            <label className="mb-1.5 text-sm font-medium text-[var(--color-text-main)]">Industry</label>
             <select
-              value={formData.teamSize}
-              onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
+              value={formData.sector}
+              onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
               className="px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:border-[var(--color-brand-orange)] focus:ring-[var(--color-brand-orange-light)] bg-white"
             >
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201+">201+ employees</option>
+              {SECTORS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          <Input
-            label="Primary Goal"
-            value={formData.primaryGoal}
-            onChange={(e) => setFormData({ ...formData, primaryGoal: e.target.value })}
-            placeholder="e.g. Increase sales conversions"
-          />
+          <div className="flex flex-col mb-4">
+            <label className="mb-1.5 text-sm font-medium text-[var(--color-text-main)]">Subscription Plan</label>
+            <select
+              value={formData.subscriptionTier}
+              onChange={(e) => setFormData({ ...formData, subscriptionTier: e.target.value })}
+              className="px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:border-[var(--color-brand-orange)] focus:ring-[var(--color-brand-orange-light)] bg-white"
+            >
+              {PLANS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              {error}
+            </p>
+          )}
 
           <div className="flex justify-end pt-4">
-            <Button type="submit">
-              Continue to Agent Behavior
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Continue to Agent Behavior'}
             </Button>
           </div>
         </form>
