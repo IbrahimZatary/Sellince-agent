@@ -45,3 +45,12 @@ class UserMeResponse(BaseModel):
     role: str
     company_id: int
     company_name: str
+    sector: str | None = None
+    subscription_tier: str | None = None
+
+
+class UpdateMeRequest(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=150)
+    company_name: str | None = Field(default=None, min_length=1, max_length=150)
+    sector: Literal["telecom", "banking"] | None = None
+    subscription_tier: Literal["pilot", "standard", "enterprise"] | None = None

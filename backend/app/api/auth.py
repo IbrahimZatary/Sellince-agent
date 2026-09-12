@@ -23,6 +23,7 @@ from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     TokenResponse,
+    UpdateMeRequest,
     UserMeResponse,
 )
 
@@ -232,6 +233,42 @@ def get_current_user_route(
         role=current_user.role,
         company_id=current_user.company_id,
         company_name=company.name if company else "",
+        sector=company.sector if company else None,
+        subscription_tier=company.subscription_tier if company else None,
+    )
+
+
+@router.patch("/me", response_model=UserMeResponse)
+def update_current_user(
+    request: UpdateMeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    company = db.query(Company).filter(Company.id == current_user.company_id).first()
+
+    if request.full_name is not None:
+        current_user.full_name = request.full_name
+    if request.company_name is not None and company is not None:
+        company.name = request.company_name
+    if request.sector is not None and company is not None:
+        company.sector = request.sector
+    if request.subscription_tier is not None and company is not None:
+        company.subscription_tier = request.subscription_tier
+
+    db.commit()
+    db.refresh(current_user)
+    if company is not None:
+        db.refresh(company)
+
+    return UserMeResponse(
+        id=current_user.id,
+        full_name=current_user.full_name,
+        email=current_user.email,
+        role=current_user.role,
+        company_id=current_user.company_id,
+        company_name=company.name if company else "",
+        sector=company.sector if company else None,
+        subscription_tier=company.subscription_tier if company else None,
     )
 
 
