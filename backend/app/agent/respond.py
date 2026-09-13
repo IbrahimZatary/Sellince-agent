@@ -74,13 +74,14 @@ def respond_node(state: AgentState) -> AgentState:
             user_prompt = f"Customer trigger: {trigger}. Customer asked/said: '{message}'."
 
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                # model="llama-3.3-70b-versatile",  # removed from Groq's API
+                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),  # app/rag/config.py
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.3,
-                max_tokens=120,
+                max_tokens=400,
             )
             llm_text = completion.choices[0].message.content.strip()
             state["response"] = llm_text

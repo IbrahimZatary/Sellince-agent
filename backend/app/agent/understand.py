@@ -41,7 +41,8 @@ Return ONLY a JSON object with this exact structure:
 }}
 """
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                # model="llama-3.3-70b-versatile",  # removed from Groq's API
+                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),  # app/rag/config.py
                 messages=[
                     {"role": "system", "content": "You are a customer intent extraction engine. Respond strictly with JSON."},
                     {"role": "user", "content": prompt},

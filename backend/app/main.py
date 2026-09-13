@@ -1,7 +1,11 @@
+from dotenv import load_dotenv
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+load_dotenv()
 
 from app.core.config import settings
 from app.core.exceptions import AppException, app_exception_handler

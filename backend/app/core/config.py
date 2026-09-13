@@ -13,7 +13,11 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: str = "lax"
     SQL_ECHO: bool = False
 
-    model_config = SettingsConfigDict(env_file=".env")
+    GROQ_API_KEY: str | None = None
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def cors_origins_list(self) -> list[str]:
