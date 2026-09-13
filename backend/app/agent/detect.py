@@ -6,6 +6,10 @@ from app.agent.agent_state import AgentState
 from app.models.customer import Customer
 
 
+def _text(value) -> str | None:
+    return value if isinstance(value, str) and value.strip() else None
+
+
 def check_triggers(customer: dict) -> str | None:
     if not customer:
         return None
@@ -54,6 +58,10 @@ def detect_node(state: AgentState) -> AgentState:
         "usage_percentage": float(row.usage_percentage) if row.usage_percentage is not None else 0.0,
         "contract_end_date": row.contract_end_date.isoformat() if row.contract_end_date else None,
         "segment": row.segment,
+        "service_type": _text(getattr(row, "service_type", None)),
+        "speed": _text(getattr(row, "speed", None)),
+        "interests": _text(getattr(row, "interests", None)),
+        "location": _text(getattr(row, "location", None)),
     }
     state["trigger_reason"] = check_triggers(state["customer_data"])
     return state

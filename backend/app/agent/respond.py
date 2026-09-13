@@ -1,6 +1,7 @@
 import os
 
 from app.agent.agent_state import AgentState
+from app.agent.templates import initial_engagement_template
 
 try:
     from groq import Groq
@@ -21,18 +22,22 @@ def _get_client():
 
 def respond_node(state: AgentState) -> AgentState:
     """Stage 4: RESPOND Node powered by Groq.
-    Generates personalized pitch, structured offer, and next action.
+
+    Generates a personalized pitch, a structured offer, and the next action.
+    Falls back to deterministic templates (initial_engagement_template) when
+    Groq is unreachable, keeping responses grounded in the real catalog.
     """
-    customer = state.get("customer_data")
+    customer = state.get("customer_data") or {}
     recommendation = state.get("recommendation") or {}
     trigger = state.get("trigger_reason")
     primary_offer = recommendation.get("primary")
     message = state.get("message") or ""
     client = _get_client()
 
-    customer_name = customer["name"] if customer else "valued customer"
-    current_plan = customer.get("current_plan", "current plan") if customer else ""
-    usage = int(customer.get("usage_percentage", 0)) if customer else 0
+    customer_name = customer.get("name") or "valued customer"
+    current_plan = customer.get("current_plan") or ""
+    usage = int(customer.get("usage_percentage") or 0)
+    service_type = customer.get("service_type")
 
     if trigger == "customer_not_found" or not customer:
         state["response"] = "Customer profile could not be found. How can I assist you today?"
@@ -47,13 +52,14 @@ def respond_node(state: AgentState) -> AgentState:
         return state
 
     offer_name = (
-        primary_offer.get("product")
-        or primary_offer.get("product_name")
+        primary_offer.get("product_name")
         or primary_offer.get("name")
+        or primary_offer.get("product")
         or "recommended plan"
     )
     offer_price = primary_offer.get("price", "")
     offer_desc = primary_offer.get("description", "")
+    features = primary_offer.get("features") or []
 
     # Attempt LLM pitch generation with Groq
     if client:
@@ -89,26 +95,14 @@ def respond_node(state: AgentState) -> AgentState:
             print(f"[Groq Respond] Falling back to rule-based template: {e}")
 
     # Fallback to deterministic message templates
-    if trigger == "high_data_usage":
-        msg = (
-            f"Hi {customer_name}, I see you're using {usage}% of your {current_plan}. "
-            f"We have a {offer_name} for just {offer_price} JOD. Interested?"
-        )
-    elif trigger == "contract_expiring":
-        msg = (
-            f"Hi {customer_name}, your contract for {current_plan} is expiring soon. "
-            f"We have an exclusive offer on the {offer_name} for {offer_price} JOD to keep you connected."
-        )
-    elif trigger == "prepaid_heavy_user":
-        msg = (
-            f"Hi {customer_name}, we noticed your high data usage on {current_plan}. "
-            f"You could get better value with our {offer_name} for {offer_price} JOD."
-        )
-    else:
-        price_text = f" for {offer_price} JOD" if offer_price else ""
-        msg = f"Hi {customer_name}, we recommend upgrading to the {offer_name}{price_text}."
-
-    state["response"] = msg
+    state["response"] = initial_engagement_template(
+        customer_name=customer_name,
+        usage_percentage=usage,
+        current_plan=current_plan,
+        product_name=offer_name,
+        price=offer_price,
+        service_type=service_type,
+    )
     state["offer"] = {
         "product": offer_name,
         "price": offer_price,
