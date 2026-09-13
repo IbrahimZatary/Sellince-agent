@@ -60,4 +60,9 @@ cd frontend && npm run build            # type/build check
 - Conversations: tenant inbox + thread detail.
 - AI agent: chat with a customer via `POST /api/v1/chat` (Groq, rule-based fallback);
   each exchange is persisted so it shows up in the inbox and dashboard.
-- Onboarding + settings: company name/industry/plan are real and editable.
+- Onboarding company info: company name/industry/plan are real and editable
+  (`PATCH /auth/me`). Settings and Analytics are still placeholder screens.
+
+The AI Agent and Conversations screens are temporary demo pages built for integration
+testing (you type as the customer to see how the agent replies). They will be replaced
+by the real frontend screens when they land.

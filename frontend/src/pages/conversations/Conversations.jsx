@@ -160,7 +160,6 @@ export default function Conversations() {
                       </div>
                       <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
                         {detail.customer.phone} · {detail.customer.plan}
-                        {detail.customer.service_type ? ` · ${detail.customer.service_type}` : ''}
                       </p>
                       <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                         Started {formatTime(detail.started_at)}

@@ -59,7 +59,7 @@ export default function AgentChat() {
         { role: 'agent', text: reply.response },
         ...(reply.offer ? [{ role: 'offer', offer: reply.offer }] : []),
         ...(reply.action === 'show_offer'
-          ? [{ role: 'agent', text: 'I have sent you an offer — take a look below.', subtle: true }]
+          ? [{ role: 'agent', text: 'I have sent you an offer. Take a look below.', subtle: true }]
           : []),
       ]);
     } catch (err) {
@@ -75,7 +75,7 @@ export default function AgentChat() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-main)]">AI Agent</h1>
           <p className="text-[var(--color-text-secondary)] mt-1">
-            Chat with a customer through your AI agent
+            Testing view: send a message as the customer and see how the AI agent responds
           </p>
         </div>
       </div>
@@ -128,9 +128,6 @@ export default function AgentChat() {
                   <p className="font-medium text-[var(--color-text-main)]">{selectedCustomer.name}</p>
                   <p className="text-[var(--color-text-secondary)]">{selectedCustomer.phone}</p>
                   <p className="text-[var(--color-text-secondary)]">{selectedCustomer.current_plan}</p>
-                  {selectedCustomer.service_type ? (
-                    <p className="text-[var(--color-text-secondary)]">{selectedCustomer.service_type}</p>
-                  ) : null}
                   {selectedCustomer.segment ? (
                     <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-brand-orange-light)] text-[var(--color-brand-orange)]">
                       {selectedCustomer.segment}
@@ -225,7 +222,7 @@ export default function AgentChat() {
                   >
                     <div className="flex items-center gap-1.5 mb-1 text-[11px] font-medium uppercase tracking-wide">
                       {isUser ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                      {isUser ? 'You' : 'AI Agent'}
+                      {isUser ? 'Customer message' : 'AI Agent'}
                     </div>
                     <p>{entry.text}</p>
                   </div>
@@ -259,7 +256,7 @@ export default function AgentChat() {
                 onChange={(event) => setInput(event.target.value)}
                 placeholder={
                   selectedCustomer
-                    ? `Message ${selectedCustomer.name} via the agent…`
+                    ? `Type the customer's question to test the agent…`
                     : 'Select a customer to start'
                 }
                 disabled={!selectedCustomer || sending}
