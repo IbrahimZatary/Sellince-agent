@@ -8,7 +8,8 @@ Monorepo with the platform frontend and backend side by side:
 - `backend/` : FastAPI backend (auth, tenant-fenced chat + AI agent, use-case seed data)
 
 Branches: `integration` (frontend + backend + agent wired), `main` (frontend work),
-`kareem/agent-integration` (AI agent work).
+`kareem/agent-integration` (AI agent work), `manar/rag-final` (RAG catalog work,
+mostly merged into integration).
 
 ## Run it locally
 
@@ -16,12 +17,21 @@ Branches: `integration` (frontend + backend + agent wired), `main` (frontend wor
 
 ```
 cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 cp .env.example .env        # set DATABASE_URL, JWT_SECRET_KEY; GROQ_API_KEY optional
-python3 -m app.seed --scale small --reset   # sample companies/customers/conversations
-python -m uvicorn app.main:app --port 8000
+python3 -m alembic upgrade head   # create the schema (Postgres must be running first)
+python3 -m app.seed --reset # seeds 20 customers (medium is the default scale)
+python3 -m uvicorn app.main:app --port 8000
 ```
+
+Optional, to enable semantic product search via the RAG vector store:
+
+```
+python3 -m scripts.ingest_products
+```
+
+Uses Python 3.12 directly (no venv needed; runs against the framework Python where
+the deps were installed).
 
 **Frontend - React 19 + Vite on :3000**
 
@@ -38,8 +48,8 @@ Open http://localhost:3000 and log in with the seed account
 **Tests**
 
 ```
-cd backend && python -m pytest
-cd frontend && npm run build   # type/build check
+cd backend && python3 -m pytest         # 69 passing, 1 skipped
+cd frontend && npm run build            # type/build check
 ```
 
 ## What's wired up (on `integration`)

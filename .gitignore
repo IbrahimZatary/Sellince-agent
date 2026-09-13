@@ -19,6 +19,7 @@ __pycache__/
 venv/
 *.db
 *.sqlite3
+chroma_db/
 
 # macOS
 .DS_Store
