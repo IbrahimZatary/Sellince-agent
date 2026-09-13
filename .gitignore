@@ -4,3 +4,4 @@ node_modules/
 .venv/
 backend/chroma_db/
 backend/.env
+backend/chroma_db_old_catalog/

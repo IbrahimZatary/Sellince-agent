@@ -1,25 +1,38 @@
-from datetime import datetime, timedelta
+from datetime import date
 
 from agent_state import AgentState
 from app.core.database import SessionLocal
 from app.models.customer import Customer
+from app.rag.customer_recommendation import UPGRADE_RULES
 
 
 def check_triggers(customer: dict) -> str | None:
-    if customer["usage_percentage"] >= 90:
-        return "high_data_usage"
+    service_type = customer.get("service_type")
+    rule = UPGRADE_RULES.get(service_type)
 
+    # Mobile usage >= 90%, Fiber usage >= 85%.
+    if rule and customer["usage_percentage"] >= rule["threshold"]:
+        return (
+            "high_data_usage"
+            if service_type == "mobile_data"
+            else "high_fiber_usage"
+        )
+
+    # Contracts ending today or within the next 29 days.
     end_date = customer.get("contract_end_date")
 
     if end_date:
-        end = datetime.strptime(end_date, "%Y-%m-%d")
+        days_remaining = (
+            date.fromisoformat(end_date) - date.today()
+        ).days
 
-        if end - datetime.now() < timedelta(days=30):
+        if 0 <= days_remaining < 30:
             return "contract_expiring"
 
+    # Preserve the existing prepaid trigger.
     if (
-        customer["segment"] == "Heavy User"
-        and customer["current_plan"] == "Prepaid Plan"
+        customer.get("segment") == "Heavy User"
+        and customer.get("current_plan") == "Prepaid Plan"
     ):
         return "prepaid_heavy_user"
 
@@ -52,6 +65,10 @@ def detect_node(state: AgentState) -> AgentState:
                 else None
             ),
             "segment": row.segment,
+            "service_type": row.service_type,
+            "speed": row.speed,
+            "interests": row.interests,
+            "location": row.location,
         }
 
         state["trigger_reason"] = check_triggers(

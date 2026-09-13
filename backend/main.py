@@ -1,9 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from graph import compiled_graph
+from app.agent.runner import run_agent_turn
 
 app = FastAPI()
 
@@ -15,18 +13,25 @@ def health():
 
 class ChatRequest(BaseModel):
     customer_id: int
+    conversation_id: int
     message: str
 
 
 @app.post("/api/chat")
-def chat(req: ChatRequest, db: Session = Depends(get_db)):
-    result = compiled_graph.invoke({
-        "customer_id": req.customer_id,
-        "message": req.message,
-        "_db": db,
-    })
+def chat(req: ChatRequest):
+    result = run_agent_turn(
+        conversation_id=req.conversation_id,
+        state={
+            "customer_id": req.customer_id,
+            "message": req.message,
+        },
+    )
+
+    recommendation = result.get("recommendation") or {}
+
     return {
-        "response": result["response"],
-        "offer": result["recommendation"]["primary"] if result["recommendation"] else None,
-        "action": result["action"],
+        "response": result.get("response"),
+        "offer": recommendation.get("primary"),
+        "action": result.get("action"),
+        "conversation_stage": result.get("conversation_stage"),
     }

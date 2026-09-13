@@ -20,6 +20,11 @@ def recommend_node(state: AgentState) -> AgentState:
         def __init__(self, data: dict):
             self.usage_percentage = data["usage_percentage"]
             self.segment = data.get("segment")
+            self.current_plan = data.get("current_plan")
+            self.service_type = data.get("service_type")
+            self.speed = data.get("speed")
+            self.interests = data.get("interests")
+            self.location = data.get("location")
 
     customer_context = CustomerContext(customer_data)
 

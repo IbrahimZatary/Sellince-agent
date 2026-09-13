@@ -16,7 +16,12 @@ def respond_node(state: AgentState) -> AgentState:
     recommendation = state.get("recommendation") or {}
     stage = state.get("conversation_stage")
 
-    primary_offer = recommendation.get("primary", {})
+    primary_offer = recommendation.get("primary") or {}
+
+    if state.get("trigger_reason") == "customer_not_found":
+        state["response"] = "Customer profile could not be found."
+        state["action"] = "abort"
+        return state
 
     customer_name = (
         customer["name"]
@@ -24,18 +29,15 @@ def respond_node(state: AgentState) -> AgentState:
         else "valued customer"
     )
 
-    if state.get("trigger_reason") == "customer_not_found":
-        state["response"] = "Customer profile could not be found."
-        state["action"] = "abort"
-        return state
-
     if not primary_offer:
         state["response"] = (
             f"Hello {customer_name}, thank you for reaching out. "
-            f"How can we assist you with your account today?"
+            "How can we assist you with your account today?"
         )
         state["action"] = "general_response"
         return state
+
+    customer = customer or {}
 
     product_name = primary_offer.get(
         "product_name",
@@ -43,32 +45,12 @@ def respond_node(state: AgentState) -> AgentState:
     )
     price = primary_offer.get("price")
     features = primary_offer.get("features", [])
-    target_segment = primary_offer.get(
-        "target_segment",
-        "customers",
-    )
-
-    if stage == "ENGAGE":
-        state["response"] = initial_engagement_template(
-            customer_name=customer_name,
-            usage_percentage=customer.get("usage_percentage"),
-            current_plan=customer.get("current_plan"),
-            product_name=product_name,
-            price=price,
-        )
-
-        state["action"] = "offer_presented"
-        return state
 
     if stage == "EXPLAIN_OFFER":
         state["response"] = explain_offer_template(
             product_name=product_name,
-            feature_1=_get_feature(features, 0),
-            feature_2=_get_feature(features, 1),
-            feature_3=_get_feature(features, 2),
-            target_segment=target_segment,
+            features=features,
         )
-
         state["action"] = "offer_explained"
         return state
 
@@ -76,7 +58,16 @@ def respond_node(state: AgentState) -> AgentState:
         customer_context = {
             "customer_name": customer_name,
             "current_plan": customer.get("current_plan"),
+            "service_type": customer.get("service_type"),
+            "speed": customer.get("speed"),
             "usage_percentage": customer.get("usage_percentage"),
+            "usage_meaning": (
+                "Percentage of speed utilized"
+                if customer.get("service_type") == "fiber_home"
+                else "Percentage of mobile data allowance used"
+                if customer.get("service_type") == "mobile_data"
+                else "Unspecified usage measure"
+            ),
             "segment": customer.get("segment"),
         }
 
@@ -86,47 +77,35 @@ def respond_node(state: AgentState) -> AgentState:
             product_info=primary_offer,
             customer_message=state["message"],
         )
-
         state["action"] = "objection_handled"
         return state
 
     if stage == "CLOSE_DEAL":
         state["response"] = close_and_route_template(
             product_name=product_name,
-            feature_1=_get_feature(features, 0),
-            feature_2=_get_feature(features, 1),
-            feature_3=_get_feature(features, 2),
+            features=features,
             product_page_url=MOCK_PRODUCT_PAGE_URL,
         )
-
         state["action"] = "deal_closed"
         return state
 
     if stage == "ROUTE_TO_PAYMENT":
         state["response"] = (
-            f"You can continue to the payment step for the "
-            f"{product_name}."
+            f"You can continue to the payment step for "
+            f"the {product_name}."
         )
-
         state["action"] = "route_to_payment"
         return state
 
-    # No stage yet = initial engagement
+    # ENGAGE or no recognized stage: present the initial offer.
     state["response"] = initial_engagement_template(
         customer_name=customer_name,
         usage_percentage=customer.get("usage_percentage"),
         current_plan=customer.get("current_plan"),
         product_name=product_name,
         price=price,
+        service_type=customer.get("service_type"),
     )
 
     state["action"] = "offer_presented"
-
     return state
-
-
-def _get_feature(features: list, index: int) -> str:
-    if index < len(features):
-        return str(features[index])
-
-    return "Feature information unavailable"

@@ -7,6 +7,13 @@ from recommend import recommend_node
 from respond import respond_node
 
 
+def route_after_detect(state: AgentState) -> str:
+    if state.get("customer_data") is None:
+        return "respond"
+
+    return "understand"
+
+
 def build_graph():
     graph = StateGraph(AgentState)
 
@@ -17,7 +24,15 @@ def build_graph():
 
     graph.set_entry_point("detect")
 
-    graph.add_edge("detect", "understand")
+    graph.add_conditional_edges(
+        "detect",
+        route_after_detect,
+        {
+            "understand": "understand",
+            "respond": "respond",
+        },
+    )
+
     graph.add_edge("understand", "recommend")
     graph.add_edge("recommend", "respond")
     graph.add_edge("respond", END)

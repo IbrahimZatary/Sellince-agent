@@ -1,27 +1,53 @@
 from .vector_store import get_vector_store
 
 
-def search_products(query: str) -> dict:
+def search_products(
+    query: str,
+    product_type: str | None = None,
+    eligible_product_ids: list[int] | None = None,
+) -> dict:
     if not query or not query.strip():
         raise ValueError("Query must not be empty.")
 
-    vector_store = get_vector_store()
+    # An explicitly empty list means no products are eligible.
+    if eligible_product_ids is not None and not eligible_product_ids:
+        return {}
 
-    results = vector_store.similarity_search(
+    filters = []
+
+    if product_type is not None:
+        filters.append({"type": product_type})
+
+    if eligible_product_ids is not None:
+        filters.append({
+            "product_id": {"$in": eligible_product_ids}
+        })
+
+    search_options = {}
+
+    if len(filters) == 1:
+        search_options["filter"] = filters[0]
+    elif len(filters) > 1:
+        search_options["filter"] = {"$and": filters}
+
+    results = get_vector_store().similarity_search(
         query=query.strip(),
         k=1,
+        **search_options,
     )
 
     if not results:
         return {}
 
-    product = results[0]
+    metadata = results[0].metadata
 
     return {
-        "product_id": product.metadata["product_id"],
-        "product_name": product.metadata["name"],
-        "price": product.metadata["price"],
-        "description": product.metadata["description"],
-        "features": product.metadata["features"],
-        "target_segment": product.metadata["target_segment"],
+        "product_id": metadata["product_id"],
+        "product_name": metadata["name"],
+        "type": metadata["type"],
+        "speed": metadata["speed"],
+        "price": metadata["price"],
+        "description": metadata["description"],
+        "features": metadata["features"],
+        "target_segment": metadata["target_segment"],
     }
