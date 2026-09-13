@@ -8,9 +8,11 @@ from .config import PRODUCTS_FILE
 REQUIRED_FIELDS = {
     "product_id",
     "name",
+    "type",
     "description",
     "features",
     "price",
+    "speed",
     "target_segment",
 }
 
@@ -38,28 +40,33 @@ def load_product_documents() -> list[Document]:
 
         if not isinstance(features, list) or not features:
             raise ValueError(
-                f"Product '{product['name']}' must have a non-empty features list."
+                f"Product '{product['name']}' must have a non-empty "
+                "features list."
             )
 
         page_content = (
-            f"{product['name']}. "
-            f"{product['description']} "
+            f"Product: {product['name']}. "
+            f"Type: {product['type']}. "
+            f"Speed: {product['speed']}. "
+            f"Description: {product['description']} "
             f"Features: {', '.join(features)}. "
             f"Target segment: {product['target_segment']}."
         )
 
-        document = Document(
-            page_content=page_content,
-            metadata={
-                "product_id": product["product_id"],
-                "name": product["name"],
-                "description": product["description"],
-                "features": features,
-                "price": product["price"],
-                "target_segment": product["target_segment"],
-            },
+        documents.append(
+            Document(
+                page_content=page_content,
+                metadata={
+                    "product_id": product["product_id"],
+                    "name": product["name"],
+                    "type": product["type"],
+                    "speed": product["speed"],
+                    "description": product["description"],
+                    "features": features,
+                    "price": product["price"],
+                    "target_segment": product["target_segment"],
+                },
+            )
         )
-
-        documents.append(document)
 
     return documents
