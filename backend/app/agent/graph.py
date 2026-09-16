@@ -6,16 +6,38 @@ from app.agent.understand import understand_node
 from app.agent.recommend import recommend_node
 from app.agent.respond import respond_node
 
-graph = StateGraph(AgentState)
-graph.add_node("detect", detect_node)
-graph.add_node("understand", understand_node)
-graph.add_node("recommend", recommend_node)
-graph.add_node("respond", respond_node)
 
-graph.set_entry_point("detect")
-graph.add_edge("detect", "understand")
-graph.add_edge("understand", "recommend")
-graph.add_edge("recommend", "respond")
-graph.add_edge("respond", END)
+def route_after_detect(state: AgentState) -> str:
+    if state.get("customer_data") is None:
+        return "respond"
 
-compiled_graph = graph.compile()
+    return "understand"
+
+
+def build_graph():
+    graph = StateGraph(AgentState)
+
+    graph.add_node("detect", detect_node)
+    graph.add_node("understand", understand_node)
+    graph.add_node("recommend", recommend_node)
+    graph.add_node("respond", respond_node)
+
+    graph.set_entry_point("detect")
+
+    graph.add_conditional_edges(
+        "detect",
+        route_after_detect,
+        {
+            "understand": "understand",
+            "respond": "respond",
+        },
+    )
+
+    graph.add_edge("understand", "recommend")
+    graph.add_edge("recommend", "respond")
+    graph.add_edge("respond", END)
+
+    return graph
+
+
+compiled_graph = build_graph().compile()

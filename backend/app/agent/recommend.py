@@ -8,7 +8,12 @@ from app.rag.customer_recommendation import (
     recommend_product_for_customer,
 )
 
-OFFERING_TRIGGERS = ("high_data_usage", "contract_expiring", "prepaid_heavy_user")
+OFFERING_TRIGGERS = (
+    "high_data_usage",
+    "high_fiber_usage",
+    "contract_expiring",
+    "prepaid_heavy_user",
+)
 
 
 def _infer_service_type(current_plan: str) -> str | None:
@@ -72,14 +77,20 @@ def recommend_node(state: AgentState) -> AgentState:
     """Stage 3: RECOMMEND Node.
 
     Recommends a real product for the customer using the rule-based recommender
-    (+ RAG retrieval when the vector store exists). Keeps the previous action
-    contract: show_offer when a recommendation exists, else ask_question.
+    (+ RAG retrieval when the vector store exists). In a multi-turn conversation
+    the existing recommendation is kept, unless it was never computed, so the
+    offer stays stable across stages.
     """
     trigger = state.get("trigger_reason")
 
-    if trigger == "customer_not_found":
+    if trigger == "customer_not_found" or not state.get("customer_data"):
         state["recommendation"] = {"primary": None, "alternative": None}
         state["action"] = "ask_question"
+        return state
+
+    # In a multi-turn conversation, keep the existing recommendation.
+    existing_recommendation = state.get("recommendation")
+    if existing_recommendation and existing_recommendation.get("primary"):
         return state
 
     customer = state.get("customer_data") or {}
@@ -93,7 +104,7 @@ def recommend_node(state: AgentState) -> AgentState:
         or any(need in ("plan upgrade", "more data", "upgrade") for need in needs)
     )
 
-    if not wants_offer or not customer:
+    if not wants_offer:
         state["recommendation"] = {"primary": None, "alternative": None}
         state["action"] = "ask_question"
         return state

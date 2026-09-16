@@ -65,11 +65,23 @@ def test_api_contract_format_and_keys():
     # Check api_contract.md keys
     assert "response" in result, "Missing 'response' in result"
     assert "action" in result, "Missing 'action' in result"
-    assert result["action"] in ["show_offer", "ask_question", "escalate"], (
-        f"Invalid action: {result.get('action')}"
-    )
+    assert result["action"] in [
+        "show_offer",
+        "ask_question",
+        "escalate",
+        "offer_explained",
+        "objection_handled",
+        "deal_closed",
+        "route_to_payment",
+    ], f"Invalid action: {result.get('action')}"
 
-    if result.get("action") == "show_offer":
+    if result.get("action") in [
+        "show_offer",
+        "offer_explained",
+        "objection_handled",
+        "deal_closed",
+        "route_to_payment",
+    ]:
         offer = result.get("offer") or result.get("recommendation", {}).get("primary")
         assert offer is not None, "Missing offer payload"
         # Verify offer keys match api_contract.md

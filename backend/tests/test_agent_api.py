@@ -33,6 +33,7 @@ def _auth_headers(db_session):
     )
     db_session.add(customer)
     db_session.flush()
+    db_session.commit()
     token = create_access_token({"sub": str(user.id)})
     return {"Authorization": f"Bearer {token}"}, customer.id
 

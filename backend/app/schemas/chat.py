@@ -10,3 +10,4 @@ class ChatResponse(BaseModel):
     response: str
     offer: dict | None
     action: str | None
+    conversation_stage: str | None = None

@@ -8,6 +8,10 @@ class AgentState(TypedDict):
     trigger_reason: Optional[str]
     intent: Optional[dict]
     recommendation: Optional[dict]
+
+    # Multi-turn conversation
+    conversation_stage: Optional[str]
+
     response: Optional[str]
     offer: Optional[dict]
     action: Optional[str]

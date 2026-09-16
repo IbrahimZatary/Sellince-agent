@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.agent.graph import compiled_graph
+from app.agent.runner import run_agent_turn
 from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AppException
@@ -24,6 +24,32 @@ def _to_decimal(value) -> Decimal | None:
         return None
 
 
+def _get_open_conversation(
+    db: Session,
+    customer_id: int,
+    company_id: int,
+) -> Conversation:
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.customer_id == customer_id,
+            Conversation.company_id == company_id,
+            Conversation.status == "open",
+        )
+        .order_by(Conversation.started_at.desc())
+        .first()
+    )
+    if not conversation:
+        conversation = Conversation(
+            customer_id=customer_id,
+            company_id=company_id,
+            status="open",
+        )
+        db.add(conversation)
+        db.flush()
+    return conversation
+
+
 @router.post("", response_model=ChatResponse)
 def chat(
     req: ChatRequest,
@@ -38,34 +64,21 @@ def chat(
             message="Customer not found",
         )
 
-    result = compiled_graph.invoke(
-        {
+    conversation = _get_open_conversation(
+        db,
+        customer_id=req.customer_id,
+        company_id=current_user.company_id,
+    )
+
+    result = run_agent_turn(
+        conversation_id=conversation.id,
+        state={
             "customer_id": req.customer_id,
             "message": req.message,
-            "_db": db,
-        }
+        },
     )
 
     # Persist the exchange so the inbox + dashboard reflect it.
-    conversation = (
-        db.query(Conversation)
-        .filter(
-            Conversation.customer_id == req.customer_id,
-            Conversation.company_id == current_user.company_id,
-            Conversation.status == "open",
-        )
-        .order_by(Conversation.started_at.desc())
-        .first()
-    )
-    if not conversation:
-        conversation = Conversation(
-            customer_id=req.customer_id,
-            company_id=current_user.company_id,
-            status="open",
-        )
-        db.add(conversation)
-        db.flush()
-
     db.add_all(
         [
             Message(
@@ -102,4 +115,5 @@ def chat(
         response=result["response"],
         offer=result["offer"],
         action=result["action"],
+        conversation_stage=result.get("conversation_stage"),
     )
