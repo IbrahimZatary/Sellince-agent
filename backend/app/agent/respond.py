@@ -67,8 +67,8 @@ def _engagement_response(
             user_prompt = f"Customer trigger: {trigger}. Customer asked/said: '{message}'."
 
             completion = client.chat.completions.create(
-                # model="llama-3.3-70b-versatile",  # removed from Groq's API
-                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),  # app/rag/config.py
+                # llama-3.3-70b-versatile was removed from Groq's API; model now comes from GROQ_MODEL
+                model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
@@ -77,7 +77,7 @@ def _engagement_response(
                 max_tokens=400,
             )
             return completion.choices[0].message.content.strip()
-        except Exception as exc:  # noqa: BLE001 - Groq may be unavailable
+        except Exception as exc:
             print(f"[Responses] Groq ENGAGE pitch failed, using template: {exc}")
 
     return initial_engagement_template(
@@ -160,7 +160,7 @@ def respond_node(state: AgentState) -> AgentState:
                 product_info=primary_offer,
                 customer_message=state.get("message", ""),
             )
-        except Exception as exc:  # noqa: BLE001 - LLM may be unavailable
+        except Exception as exc:
             print(f"[Responses] Groq objection handling failed, using template: {exc}")
             state["response"] = explain_offer_template(
                 product_name=offer_name,

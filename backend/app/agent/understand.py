@@ -118,7 +118,7 @@ def understand_node(state: AgentState) -> AgentState:
             state["intent"] = intent
             state["conversation_stage"] = determine_conversation_stage(intent)
             return state
-        except Exception as exc:  # noqa: BLE001 - LLM may be unavailable
+        except Exception as exc:
             print(f"[Understand] LLM classify failed, falling back to heuristics: {exc}")
 
     intent = _keyword_classify(message)

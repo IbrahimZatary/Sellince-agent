@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Any
+from typing import TypedDict, Optional
 
 
 class AgentState(TypedDict):
@@ -15,4 +15,3 @@ class AgentState(TypedDict):
     response: Optional[str]
     offer: Optional[dict]
     action: Optional[str]
-    _db: Optional[Any]

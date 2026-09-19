@@ -38,6 +38,3 @@ def build_graph():
     graph.add_edge("respond", END)
 
     return graph
-
-
-compiled_graph = build_graph().compile()

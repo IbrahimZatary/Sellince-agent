@@ -78,7 +78,6 @@ def chat(
         },
     )
 
-    # Persist the exchange so the inbox + dashboard reflect it.
     db.add_all(
         [
             Message(

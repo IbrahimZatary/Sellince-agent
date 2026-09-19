@@ -13,8 +13,6 @@ def run_agent_turn(
     }
 
     with get_checkpointer() as checkpointer:
-        checkpointer.setup()
-
         graph = build_graph().compile(
             checkpointer=checkpointer
         )

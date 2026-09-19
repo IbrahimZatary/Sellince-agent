@@ -88,20 +88,17 @@ def recommend_node(state: AgentState) -> AgentState:
         state["action"] = "ask_question"
         return state
 
-    # In a multi-turn conversation, keep the existing recommendation.
+    # In a multi-turn conversation, keep the existing recommendation
     existing_recommendation = state.get("recommendation")
     if existing_recommendation and existing_recommendation.get("primary"):
         return state
 
     customer = state.get("customer_data") or {}
-    intent = state.get("intent") or {}
-    needs = intent.get("needs") or []
     usage = float(customer.get("usage_percentage") or 0.0)
 
     wants_offer = (
         trigger in OFFERING_TRIGGERS
         or usage >= 90
-        or any(need in ("plan upgrade", "more data", "upgrade") for need in needs)
     )
 
     if not wants_offer:
@@ -115,7 +112,7 @@ def recommend_node(state: AgentState) -> AgentState:
     if CHROMA_DIR.exists():
         try:
             primary = recommend_product_for_customer(ctx) or None
-        except Exception as exc:  # noqa: BLE001 - vector store may be unavailable
+        except Exception as exc:
             print(f"[Recommend] RAG retrieval unavailable for this request: {exc}")
             primary = None
 

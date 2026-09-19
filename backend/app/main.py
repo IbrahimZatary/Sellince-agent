@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
@@ -8,6 +10,7 @@ from fastapi.responses import JSONResponse
 load_dotenv()
 
 from app.core.config import settings
+from app.agent.checkpoint import init_checkpointer_schema
 from app.core.exceptions import AppException, app_exception_handler
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
@@ -15,7 +18,13 @@ from app.api.conversations import router as conversations_router
 from app.api.customers import router as customers_router
 from app.api.dashboard import router as dashboard_router
 
-app = FastAPI(title=settings.PROJECT_NAME)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_checkpointer_schema()
+    yield
+
+
+app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 app.add_exception_handler(AppException, app_exception_handler)
 
