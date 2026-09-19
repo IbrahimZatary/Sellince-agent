@@ -64,7 +64,7 @@ CUSTOMERS = [
     {"company": "Zain", "name": "Hana Khoury", "phone": "0791234567", "service_type": "mobile_data", "current_plan": "10GB Mobile Data", "speed": "4G", "usage_percentage": "30.00", "contract_end_date": "2026-09-26", "segment": "Average User", "interests": None, "location": None},
     {"company": "Zain", "name": "Mahmoud Ezat", "phone": "0792345678", "service_type": "fiber_home", "current_plan": "Fiber 100 Mbps", "speed": "100 Mbps", "usage_percentage": "92.00", "contract_end_date": "2027-04-10", "segment": "Heavy User", "interests": None, "location": "Amman - Sweifieh"},
     {"company": "Zain", "name": "Rania Masri", "phone": "0793456789", "service_type": "mobile_data", "current_plan": "20GB Mobile Data", "speed": "4G", "usage_percentage": "97.00", "contract_end_date": "2027-11-11", "segment": "Heavy User", "interests": None, "location": None},
-    {"company": "Zain", "name": "Tamer Saliba", "phone": "0794567890", "service_type": "mobile_data", "current_plan": "5GB Mobile Data", "speed": "4G", "usage_percentage": "40.00", "contract_end_date": "2027-05-15", "segment": "Average User", "interests": None, "location": None},
+    {"company": "Zain", "name": "Tamer Saliba", "phone": "0794567890", "service_type": "mobile_data", "current_plan": "Prepaid Plan", "speed": "4G", "usage_percentage": "60.00", "contract_end_date": "2027-05-15", "segment": "Heavy User", "interests": None, "location": None},
 ]
 
 LARGE_EXTRAS = []
