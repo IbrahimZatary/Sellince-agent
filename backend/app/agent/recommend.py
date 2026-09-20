@@ -8,13 +8,6 @@ from app.rag.customer_recommendation import (
     recommend_product_for_customer,
 )
 
-OFFERING_TRIGGERS = (
-    "high_data_usage",
-    "high_fiber_usage",
-    "contract_expiring",
-    "prepaid_heavy_user",
-)
-
 
 def _infer_service_type(current_plan: str) -> str | None:
     """Infer the customer's service type from their plan name when unset."""
@@ -40,36 +33,91 @@ class _CustomerContext:
         self.location = data.get("location")
 
 
-def _catalog_fallback(ctx: _CustomerContext) -> dict | None:
-    """Pick the next larger eligible product straight from products.json.
-
-    Used when the Chroma vector store is not built yet, so /chat keeps working
-    with zero setup. Mirrors customer_recommendation.recommend_product_for_customer
-    without touching the retriever.
-    """
-    product_type, eligible_ids = get_upgrade_candidates(ctx)
-    if not eligible_ids:
-        return None
-
+def _get_products_for_upgrade(ctx: _CustomerContext) -> list[dict]:
+    """Get eligible upgrade products based on customer context and service type."""
     with PRODUCTS_FILE.open(encoding="utf-8") as handle:
         products = json.load(handle)
 
-    match = next(
-        (product for product in products if product["product_id"] in eligible_ids),
-        None,
-    )
-    if match is None:
+    service_type = ctx.service_type or "mobile_data"
+    segment = (ctx.segment or "").strip().lower()
+
+    # Determine target segment based on customer
+    if segment == "heavy user":
+        target_segments = ["Heavy User", "Families"]
+    elif segment == "average user":
+        target_segments = ["Average User", "Families"]
+    elif segment == "low user":
+        target_segments = ["Low User", "Average User", "Families"]
+    else:
+        target_segments = ["Heavy User", "Average User", "Low User", "Families", "Mobile Users"]
+
+    # Filter products by service type and target segment
+    eligible = []
+    for product in products:
+        if product["type"] != ctx.service_type:
+            continue
+        if product.get("target_segment") in target_segments:
+            eligible.append(product)
+
+    return eligible
+
+
+def _select_product_for_upgrade(ctx: _CustomerContext) -> dict | None:
+    """Select the best upgrade product for the customer."""
+    eligible = []
+    for product in _get_products_for_upgrade(ctx):
+        eligible.append(product)
+
+    if not eligible:
+        return None
+
+    # Sort by price ascending, prefer next tier up
+    eligible.sort(key=lambda p: p["price"])
+    return eligible[0] if eligible else None
+
+
+def _select_product_for_postpaid_switch(ctx: _CustomerContext) -> dict | None:
+    """Select postpaid plan for prepaid user wanting to switch."""
+    with PRODUCTS_FILE.open(encoding="utf-8") as handle:
+        products = json.load(handle)
+
+    # Postpaid mobile data plans (not prepaid, not add-ons, not fiber, not bundles)
+    postpaid_plans = [
+        p for p in products
+        if p["type"] == "mobile_data"
+        and p["name"] not in ("5G Add-on",)
+    ]
+
+    if not postpaid_plans:
+        return None
+
+    # Sort by price, recommend the entry-level postpaid plan
+    postpaid_plans.sort(key=lambda p: p["price"])
+    return postpaid_plans[0] if postpaid_plans else None
+
+
+def _select_recommendation(customer_data: dict, search_type: str) -> dict | None:
+    """Select recommendation based on search type."""
+    if search_type == "data_upgrade":
+        ctx = _CustomerContext(customer_data)
+        product = _select_product_for_upgrade(_CustomerContext(customer_data))
+    elif search_type == "postpaid_switch":
+        product = _select_product_for_postpaid_switch(_CustomerContext(customer_data))
+    else:
+        return None
+
+    if not product:
         return None
 
     return {
-        "product_id": match["product_id"],
-        "product_name": match["name"],
-        "type": match["type"],
-        "speed": match["speed"],
-        "price": match["price"],
-        "description": match["description"],
-        "features": match["features"],
-        "target_segment": match["target_segment"],
+        "product_id": product["product_id"],
+        "product_name": product["name"],
+        "type": product["type"],
+        "speed": product["speed"],
+        "price": product["price"],
+        "description": product["description"],
+        "features": product["features"],
+        "target_segment": product["target_segment"],
     }
 
 
@@ -80,6 +128,12 @@ def recommend_node(state: AgentState) -> AgentState:
     (+ RAG retrieval when the vector store exists). In a multi-turn conversation
     the existing recommendation is kept, unless it was never computed, so the
     offer stays stable across stages.
+
+    Logic matches Kareem's branch exactly:
+    - high_data_usage, contract_expiring, or usage >= 90% → data upgrade
+    - prepaid_heavy_user → postpaid switch
+    - intent needs: "plan upgrade", "more data", "upgrade" → data upgrade
+    - else → no offer
     """
     trigger = state.get("trigger_reason")
 
@@ -95,29 +149,43 @@ def recommend_node(state: AgentState) -> AgentState:
 
     customer = state.get("customer_data") or {}
     usage = float(customer.get("usage_percentage") or 0.0)
+    intent = state.get("intent") or {}
+    needs = intent.get("needs") or []
+    trigger = state.get("trigger_reason")
 
-    wants_offer = (
-        trigger in OFFERING_TRIGGERS
-        or usage >= 90
-    )
+    # Kareem's logic: explicit per-trigger handling
+    search_type = None
 
-    if not wants_offer:
+    if trigger in ("high_data_usage", "contract_expiring") or usage >= 90:
+        search_type = "data_upgrade"
+    elif trigger == "prepaid_heavy_user":
+        search_type = "postpaid_switch"
+    elif any(n in ("plan upgrade", "more data", "upgrade") for n in needs):
+        search_type = "data_upgrade"
+    else:
         state["recommendation"] = {"primary": None, "alternative": None}
         state["action"] = "ask_question"
         return state
 
-    ctx = _CustomerContext(customer)
-
+    # Select product based on search type
     primary = None
     if CHROMA_DIR.exists():
         try:
+            # Try RAG first with customer context
+            ctx = _CustomerContext(state.get("customer_data") or {})
             primary = recommend_product_for_customer(ctx) or None
         except Exception as exc:
             print(f"[Recommend] RAG retrieval unavailable for this request: {exc}")
             primary = None
 
     if not primary:
-        primary = _catalog_fallback(ctx)
+        # Fallback to our custom product selection
+        if "postpaid" in search_type:
+            primary = _select_product_for_postpaid_switch(_CustomerContext(state.get("customer_data") or {}))
+        else:
+            # data_upgrade
+            ctx = _CustomerContext(state.get("customer_data") or {})
+            primary = _select_product_for_upgrade(_CustomerContext(state.get("customer_data") or {}))
 
     state["recommendation"] = {"primary": primary, "alternative": None}
     state["action"] = "show_offer" if primary else "ask_question"

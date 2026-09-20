@@ -13,6 +13,14 @@ export default defineConfig({
       "@": SOURCE_DIRECTORY,
     },
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     fileParallelism: false,
