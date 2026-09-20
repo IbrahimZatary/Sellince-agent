@@ -18,6 +18,7 @@ from app.models import (
     Message,
     Offer,
     RefreshToken,
+    Attribution,
 )
 
 

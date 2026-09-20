@@ -5,6 +5,7 @@ from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.offer import Offer
 from app.models.refresh_token import RefreshToken
+from app.models.attribution import Attribution
 
 __all__ = [
     "Company",
@@ -14,4 +15,5 @@ __all__ = [
     "Message",
     "Offer",
     "RefreshToken",
+    "Attribution",
 ]

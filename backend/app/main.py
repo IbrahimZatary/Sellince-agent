@@ -14,6 +14,7 @@ from app.agent.checkpoint import init_checkpointer_schema
 from app.core.exceptions import AppException, app_exception_handler
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
+from app.api.attributions import router as attributions_router
 from app.api.conversations import router as conversations_router
 from app.api.customers import router as customers_router
 from app.api.dashboard import router as dashboard_router
@@ -52,6 +53,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(chat_router, prefix="/api/v1")
+app.include_router(attributions_router, prefix="/api/v1")
 app.include_router(conversations_router, prefix="/api/v1")
 app.include_router(customers_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
