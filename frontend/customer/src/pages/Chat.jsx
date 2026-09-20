@@ -1,16 +1,14 @@
-import { useAuth } from "@/components/auth/AuthContext";
+import { useSearchParams } from "react-router";
 import Chatbot from "@/components/chat/Chatbot";
 import { requestAssistantReply } from "@/api/chat.api";
 
 function Chat() {
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const customerId = searchParams.get("customer_id") || localStorage.getItem("customer_id") || "1";
 
   const handleMessageSend = async (message) => {
-    if (!user?.customer_id) {
-      throw new Error("Customer ID not available. Please complete onboarding.");
-    }
     const response = await requestAssistantReply({
-      customer_id: user.customer_id,
+      customer_id: parseInt(customerId, 10),
       message,
     });
     return response.response;
