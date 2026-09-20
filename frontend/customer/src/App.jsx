@@ -5,6 +5,7 @@ import SignUp from "@/components/auth/SignUp";
 import Chat from "@/pages/Chat";
 import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 function App() {
   return (
@@ -12,9 +13,13 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
-      <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/chat" element={<Chat />} />
-      <Route path="/dashboard" element={<Chat />} />
+      <Route
+        element={<ProtectedRoute />}
+        children={[
+          { path: "onboarding", element: <Onboarding /> },
+          { path: "chat", element: <Chat /> },
+        ]}
+      />
     </Routes>
   );
 }

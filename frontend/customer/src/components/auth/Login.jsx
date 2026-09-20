@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordField from "@/components/auth/PasswordField";
@@ -6,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authenticateUser } from "@/api/auth.api";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -16,15 +18,17 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * - Controlled email and password inputs with field-level validation.
  * - Password show/hide toggle via PasswordField.
  * - Accessible error messages (`role="alert"` and `aria-invalid`).
- * - Safe authentication boundary awaiting official backend JWT contract.
+ * - Calls authenticateUser API and redirects on success.
  */
 function Login() {
+  const navigate = useNavigate();
   const [loginFormValues, setLoginFormValues] = useState({
     email: "",
     password: "",
   });
   const [loginFormErrors, setLoginFormErrors] = useState({});
   const [loginRequestError, setLoginRequestError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validateLoginForm(values) {
     const nextErrors = {};
@@ -63,7 +67,7 @@ function Login() {
     }
   }
 
-  function handleLoginSubmit(event) {
+  async function handleLoginSubmit(event) {
     event.preventDefault();
 
     const formValidationErrors = validateLoginForm(loginFormValues);
@@ -73,9 +77,24 @@ function Login() {
     }
 
     setLoginFormErrors({});
+    setLoginRequestError(null);
+    setIsSubmitting(true);
 
-    // Navigate to /onboarding after the backend team provides the official authentication response contract and successful login can be verified.
-    setLoginRequestError("Login will be available when secure authentication is connected.");
+    try {
+      await authenticateUser({
+        email: loginFormValues.email.trim(),
+        password: loginFormValues.password,
+      });
+      // On success, navigate to onboarding or chat
+      navigate("/onboarding", { replace: true });
+    } catch (error) {
+      const serverMessage =
+        error.response?.data?.message ||
+        "Unable to log in. Please check your credentials and try again.";
+      setLoginRequestError(serverMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -106,6 +125,7 @@ function Login() {
             aria-invalid={Boolean(loginFormErrors.email)}
             aria-describedby={loginFormErrors.email ? "login-email-error" : undefined}
             className="h-11 text-base md:text-sm"
+            disabled={isSubmitting}
           />
           {loginFormErrors.email ? (
             <p id="login-email-error" role="alert" className="text-destructive text-xs">
@@ -125,6 +145,7 @@ function Login() {
             autoComplete="current-password"
             aria-invalid={Boolean(loginFormErrors.password)}
             aria-describedby={loginFormErrors.password ? "login-password-error" : undefined}
+            disabled={isSubmitting}
           />
           {loginFormErrors.password ? (
             <p id="login-password-error" role="alert" className="text-destructive text-xs">
@@ -135,9 +156,10 @@ function Login() {
 
         <Button
           type="submit"
+          disabled={isSubmitting}
           className="h-11 w-full rounded-lg text-base font-medium transition-all"
         >
-          Log in
+          {isSubmitting ? "Logging in..." : "Log in"}
         </Button>
       </form>
     </AuthLayout>

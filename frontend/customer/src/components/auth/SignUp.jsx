@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { registerUser } from "@/api/client";
+import { signup } from "@/api/auth.api";
 import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordField from "@/components/auth/PasswordField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -134,7 +134,7 @@ function SignUp() {
     setIsSignUpSubmitting(true);
 
     try {
-      await registerUser({
+      await signup({
         name: signUpFormValues.name.trim(),
         email: signUpFormValues.email.trim(),
         password: signUpFormValues.password,
@@ -142,7 +142,7 @@ function SignUp() {
         sector: signUpFormValues.sector,
       });
 
-      // TODO: When backend authentication contract is available, handle registration response and onboarding flow.
+      // On success, the AuthContext will handle redirect via signUp callback
     } catch (error) {
       const serverMessage =
         error.response?.data?.message ||

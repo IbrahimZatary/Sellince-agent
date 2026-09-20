@@ -1,6 +1,7 @@
 import { ArrowRightIcon, MessagesSquareIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "@/components/auth/AuthContext";
 
 import sellinceAssistantProduct from "@/assets/images/sellince-assistant-product.png";
 import sellinceIntelligenceProduct from "@/assets/images/sellince-intelligence-product.png";
@@ -48,10 +49,11 @@ const INTELLIGENCE_UNAVAILABLE_MESSAGE =
  * Directs newly registered users through the workspace onboarding flow:
  * 1. Shows progress tracker (`ACCOUNT CREATED` -> `CHOOSE WORKSPACE` -> `START`).
  * 2. Presents interactive product selection cards for Sellince modules.
- * 3. Navigates to `/dashboard` upon selecting the active AI Sales Assistant product.
+ * 3. Navigates to `/chat` upon selecting the active AI Sales Assistant product.
  */
 function Onboarding() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [selectedProductId, setSelectedProductId] = useState(DEFAULT_PRODUCT_ID);
   const [productActionMessage, setProductActionMessage] = useState("");
 
@@ -77,9 +79,9 @@ function Onboarding() {
     setProductActionMessage(INTELLIGENCE_UNAVAILABLE_MESSAGE);
   }
 
-  function handleSignOut() {
-    // Replace this navigation-only action with official session invalidation after the backend authentication contract is connected.
-    navigate("/login");
+  async function handleSignOut() {
+    await signOut();
+    navigate("/login", { replace: true });
   }
 
   function handleCompareServices() {
