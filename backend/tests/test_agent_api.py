@@ -1,30 +1,19 @@
 from datetime import date
 from decimal import Decimal
 
-from app.core.security import create_access_token
 from app.models.company import Company
 from app.models.customer import Customer
-from app.models.user import User
-
-client_seed = {}
 
 
-def _auth_headers(db_session):
+def test_chat_no_auth_required(client, db_session):
+    """Chat works without auth: customer_id in body -> AI reply."""
     company = Company(name="TestCo", sector="telecom", subscription_tier="standard")
     db_session.add(company)
     db_session.flush()
-    user = User(
-        company_id=company.id,
-        full_name="Test Agent",
-        email="agent@testco.com",
-        password_hash="not-used-in-test",
-        role="admin",
-    )
-    db_session.add(user)
-    db_session.flush()
+
     customer = Customer(
         company_id=company.id,
-        name="Sara",
+        name="Test Customer",
         phone="0790000001",
         current_plan="5GB Data Plan",
         usage_percentage=Decimal("95.00"),
@@ -34,25 +23,10 @@ def _auth_headers(db_session):
     db_session.add(customer)
     db_session.flush()
     db_session.commit()
-    token = create_access_token({"sub": str(user.id)})
-    return {"Authorization": f"Bearer {token}"}, customer.id
 
-
-def test_chat_requires_auth(client, db_session):
-    """Chat is protected: no token -> 401."""
-    resp = client.post(
-        "/api/v1/chat", json={"customer_id": 1, "message": "I need more data"}
-    )
-    assert resp.status_code == 401
-
-
-def test_chat_valid_customer(client, db_session):
-    """Valid, authenticated request for an existing customer returns a reply."""
-    headers, customer_id = _auth_headers(db_session)
     response = client.post(
         "/api/v1/chat",
-        json={"customer_id": customer_id, "message": "I need more data"},
-        headers=headers,
+        json={"customer_id": customer.id, "message": "I need more data"}
     )
 
     assert response.status_code == 200
@@ -66,60 +40,62 @@ def test_chat_valid_customer(client, db_session):
 
 def test_chat_nonexistent_customer(client, db_session):
     """Unknown customer id is fenced with 404 (not found)."""
-    headers, _ = _auth_headers(db_session)
-
     response = client.post(
-        "/api/v1/chat", json={"customer_id": 99999, "message": "hello"}, headers=headers
+        "/api/v1/chat", json={"customer_id": 99999, "message": "hello"}
     )
 
     assert response.status_code == 404
     assert response.json().get("error_code") == "CUSTOMER_NOT_FOUND"
 
 
-def test_chat_cross_tenant_customer(client, db_session):
-    """A customer from another company is invisible to this user (tenant fence)."""
-    headers, _ = _auth_headers(db_session)
-
-    other_company = Company(name="OtherCo", sector="telecom", subscription_tier="pilot")
-    db_session.add(other_company)
+def test_chat_cross_tenant_allowed(client, db_session):
+    """Any customer_id works (no tenant isolation for embeddable widget)."""
+    # Create two companies with customers
+    company1 = Company(name="Company1", sector="telecom", subscription_tier="standard")
+    company2 = Company(name="Company2", sector="telecom", subscription_tier="pilot")
+    db_session.add_all([company1, company2])
     db_session.flush()
-    other_customer = Customer(
-        company_id=other_company.id,
-        name="Zaid",
-        phone="0790000099",
-        current_plan="20GB Mobile Data",
+
+    customer1 = Customer(
+        company_id=company1.id,
+        name="Customer1",
+        phone="0790000001",
+        current_plan="5GB Data Plan",
+        usage_percentage=Decimal("95.00"),
+        contract_end_date=date(2026, 12, 31),
+        segment="Heavy User",
+    )
+    customer2 = Customer(
+        company_id=company2.id,
+        name="Customer2",
+        phone="0790000002",
+        current_plan="5GB Data Plan",
         usage_percentage=Decimal("50.00"),
-        contract_end_date=date(2027, 1, 1),
+        contract_end_date=date(2026, 12, 31),
         segment="Average User",
     )
-    db_session.add(other_customer)
-    db_session.flush()
+    db_session.add_all([customer1, customer2])
+    db_session.commit()
 
+    # Customer from company2 can be accessed (no tenant fence)
     response = client.post(
         "/api/v1/chat",
-        json={"customer_id": other_customer.id, "message": "hello"},
-        headers=headers,
+        json={"customer_id": customer2.id, "message": "hello"}
     )
-
-    assert response.status_code == 404
-    assert response.json().get("error_code") == "CUSTOMER_NOT_FOUND"
+    assert response.status_code == 200
 
 
 def test_chat_missing_fields(client, db_session):
-    """Request validation still applies after auth succeeds."""
-    headers, _ = _auth_headers(db_session)
-
-    resp = client.post("/api/v1/chat", json={"customer_id": 1}, headers=headers)
+    """Request validation still applies."""
+    resp = client.post("/api/v1/chat", json={"customer_id": 1})
     assert resp.status_code == 422
 
-    resp = client.post("/api/v1/chat", json={"message": "hello"}, headers=headers)
+    resp = client.post("/api/v1/chat", json={"message": "hello"})
     assert resp.status_code == 422
 
 
 def test_chat_invalid_types(client, db_session):
-    """Invalid field types are rejected with 422 after auth."""
-    headers, _ = _auth_headers(db_session)
-
+    """Invalid field types are rejected with 422."""
     payload = {"customer_id": "not_an_int", "message": "hello"}
-    resp = client.post("/api/v1/chat", json=payload, headers=headers)
+    resp = client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 422

@@ -4,14 +4,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.agent.runner import run_agent_turn
-from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AppException
 from app.models.conversation import Conversation
 from app.models.customer import Customer
 from app.models.message import Message
 from app.models.offer import Offer
-from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -53,11 +51,10 @@ def _get_open_conversation(
 @router.post("", response_model=ChatResponse)
 def chat(
     req: ChatRequest,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     customer = db.query(Customer).filter(Customer.id == req.customer_id).first()
-    if not customer or customer.company_id != current_user.company_id:
+    if not customer:
         raise AppException(
             status_code=404,
             error_code="CUSTOMER_NOT_FOUND",
@@ -67,7 +64,7 @@ def chat(
     conversation = _get_open_conversation(
         db,
         customer_id=req.customer_id,
-        company_id=current_user.company_id,
+        company_id=customer.company_id,
     )
 
     result = run_agent_turn(
@@ -101,7 +98,7 @@ def chat(
                 Offer(
                     customer_id=req.customer_id,
                     conversation_id=conversation.id,
-                    company_id=current_user.company_id,
+                    company_id=customer.company_id,
                     product_name=str(offer.get("product") or "Special Offer"),
                     price=price,
                     status="sent",
