@@ -1,19 +1,9 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "@/components/auth/AuthContext";
 
 export default function ProtectedRoute() {
-  const { status } = useAuth();
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-app)]">
-        <div className="text-[var(--color-text-secondary)]">Loading session...</div>
-      </div>
-    );
-  }
-
-  if (status !== "authenticated") {
+  if (!localStorage.getItem("customer_access_token") || !localStorage.getItem("customer_id")) {
     return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
+}

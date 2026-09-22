@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from app.core.security import create_access_token
 from app.models.company import Company
+from app.models.attribution import Attribution
 from app.models.conversation import Conversation
 from app.models.customer import Customer
 from app.models.message import Message
@@ -58,11 +59,19 @@ def _seed_dashboard(db_session):
                 price=Decimal("5.00"),
                 status="sent",
             ),
+            Attribution(
+                conversation_id=conversation.id,
+                customer_id=customer.id,
+                product_id="1",
+                product_name="50GB Mobile 5G",
+                price=Decimal("25.00"),
+                status="completed",
+            ),
         ]
     )
     db_session.add_all(
         [
-            Message(conversation_id=conversation.id, sender="agent", text="Hello Dana"),
+            Message(conversation_id=conversation.id, sender="ai_agent", text="Hello Dana"),
             Message(conversation_id=conversation.id, sender="customer", text="Hi"),
         ]
     )
@@ -105,8 +114,9 @@ def test_dashboard_summary_shape_and_counts(client, db_session):
     assert body["conversionFunnel"][1]["percentage"] == 100  # replied (2 msgs)
 
     shares = {s["category"]: s["value"] for s in body["revenueByOffer"]}
-    assert shares["Data Upgrades"] == 50
-    assert shares["Add-ons"] == 50
+    assert shares["Data Upgrades"] == 100
+    assert shares["Add-ons"] == 0
 
     assert body["recentActivity"][0]["customer"] == "Dana"
-    assert body["recentActivity"][0]["status"] == "open"
+    assert body["recentActivity"][0]["status"] == "confirmed"
+    assert body["recentActivity"][0]["action"] == "50GB Mobile 5G"

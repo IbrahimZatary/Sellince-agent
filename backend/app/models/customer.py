@@ -14,6 +14,7 @@ class Customer(Base):
     company_id: Mapped[int] = mapped_column(BIGINT_ID, ForeignKey("companies.id"))
     name: Mapped[str] = mapped_column(String(150))
     phone: Mapped[str] = mapped_column(String(30))
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     service_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
     current_plan: Mapped[str] = mapped_column(String(100))
     speed: Mapped[str | None] = mapped_column(String(30), nullable=True)

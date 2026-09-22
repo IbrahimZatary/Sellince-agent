@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 import { cn } from "@/lib/utils";
 
 function MessageBubble({ message }) {
@@ -5,7 +7,7 @@ function MessageBubble({ message }) {
 
   return (
     <div className={cn("flex", isCustomerMessage ? "justify-end" : "justify-start")}>
-      <p
+      <div
         className={cn(
           "max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-6 break-words whitespace-pre-wrap",
           isCustomerMessage
@@ -13,8 +15,17 @@ function MessageBubble({ message }) {
             : "bg-surface text-foreground border-border rounded-bl-sm border",
         )}
       >
-        {message.content}
-      </p>
+        <p>{message.content}</p>
+
+        {message.action && typeof message.action === "object" ? (
+          <Link
+            to={message.action.url}
+            className="bg-primary text-primary-foreground mt-3 inline-flex w-full items-center justify-center rounded-lg px-3 py-2 font-medium transition hover:opacity-90"
+          >
+            {message.action.label || "Continue"}
+          </Link>
+        ) : null}
+      </div>
     </div>
   );
 }

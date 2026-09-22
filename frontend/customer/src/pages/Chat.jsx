@@ -4,14 +4,14 @@ import { requestAssistantReply } from "@/api/chat.api";
 
 function Chat() {
   const [searchParams] = useSearchParams();
-  const customerId = searchParams.get("customer_id") || localStorage.getItem("customer_id") || "1";
+  const customerId = searchParams.get("customer_id") || localStorage.getItem("customer_id");
 
   const handleMessageSend = async (message) => {
     const response = await requestAssistantReply({
       customer_id: parseInt(customerId, 10),
       message,
     });
-    return response.response;
+    return response;
   };
 
   return (

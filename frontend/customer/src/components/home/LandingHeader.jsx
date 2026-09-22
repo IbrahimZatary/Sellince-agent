@@ -1,7 +1,6 @@
 import { MenuIcon } from "lucide-react";
 import { Link } from "react-router";
 
-import PillArrow from "@/components/home/PillArrow";
 import SellinceLogo from "@/components/home/SellinceLogo";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,16 +55,9 @@ function LandingHeader() {
           <div className="hidden lg:block" aria-hidden="true" />
         )}
 
-        <div className="hidden items-center justify-self-end gap-3 lg:flex xl:gap-4">
+        <div className="hidden items-center gap-3 justify-self-end lg:flex xl:gap-4">
           <Button asChild variant="outline" className="h-12 rounded-full px-7 text-base">
             <Link to="/login">Log in</Link>
-          </Button>
-
-          <Button asChild className="h-12 rounded-full py-1.5 pr-1.5 pl-7 text-base">
-            <Link to="/signup" className="gap-3">
-              Get started
-              <PillArrow />
-            </Link>
           </Button>
         </div>
 
@@ -107,15 +99,6 @@ function LandingHeader() {
               <SheetClose asChild>
                 <Button asChild variant="outline" className="h-12 rounded-full text-base">
                   <Link to="/login">Log in</Link>
-                </Button>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Button asChild className="h-12 rounded-full py-1.5 pr-1.5 pl-7 text-base">
-                  <Link to="/signup" className="gap-3">
-                    Get started
-                    <PillArrow />
-                  </Link>
                 </Button>
               </SheetClose>
             </div>

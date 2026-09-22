@@ -3,6 +3,7 @@ from typing import TypedDict, Optional
 
 class AgentState(TypedDict):
     customer_id: int
+    conversation_id: int
     message: str
     customer_data: Optional[dict]
     trigger_reason: Optional[str]
@@ -14,4 +15,4 @@ class AgentState(TypedDict):
 
     response: Optional[str]
     offer: Optional[dict]
-    action: Optional[str]
+    action: Optional[dict]

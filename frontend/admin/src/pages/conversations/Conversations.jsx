@@ -179,7 +179,7 @@ export default function Conversations() {
                       {detail.offer.product_name}
                     </p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      {detail.offer.price} EGP · {detail.offer.status}
+                      {detail.offer.price} JOD · {detail.offer.status}
                     </p>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-[var(--color-brand-orange)] border border-[var(--color-brand-orange)]/30">
@@ -201,15 +201,18 @@ export default function Conversations() {
                   <p className="text-sm text-red-600">Failed to load this conversation.</p>
                 )}
                 {detail?.messages.map((message) => {
-                  const isAgent = message.sender === 'agent';
+                  const isAgent = message.sender === 'agent' || message.sender === 'ai_agent';
+                  const isSystem = message.sender === 'system';
                   return (
                     <div
                       key={message.id}
-                      className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${isSystem ? 'justify-center' : isAgent ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
                         className={`max-w-[75%] px-4 py-2 rounded-xl text-sm ${
-                          isAgent
+                          isSystem
+                            ? 'bg-gray-50 text-[var(--color-text-muted)] border border-dashed border-[var(--color-border)]'
+                            : isAgent
                             ? 'bg-[var(--color-brand-orange)] text-white rounded-br-sm'
                             : 'bg-gray-100 text-[var(--color-text-main)] rounded-bl-sm'
                         }`}
@@ -220,7 +223,7 @@ export default function Conversations() {
                             isAgent ? 'text-white/70' : 'text-[var(--color-text-muted)]'
                           }`}
                         >
-                          {isAgent ? 'AI Agent' : 'Customer'} · {formatTime(message.sent_at)}
+                          {isSystem ? 'System' : isAgent ? 'AI Agent' : 'Customer'} · {formatTime(message.sent_at)}
                         </p>
                       </div>
                     </div>

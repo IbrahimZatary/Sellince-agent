@@ -21,6 +21,7 @@ APP_TABLES = [
     "customers",
     "users",
     "companies",
+    "attributions",
 ]
 
 CHECKPOINTER_TABLES = [
@@ -59,6 +60,7 @@ def test_engine(_ensure_test_db):
     from app.models.message import Message
     from app.models.offer import Offer
     from app.models.refresh_token import RefreshToken
+    from app.models.attribution import Attribution
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
@@ -73,6 +75,20 @@ def test_engine(_ensure_test_db):
 def _clean_database(test_engine):
     """Truncate all tables (app + checkpointer) between tests."""
     from sqlalchemy import inspect
+
+    with test_engine.begin() as conn:
+        existing = set(inspect(conn).get_table_names())
+        to_truncate = [
+            table for table in APP_TABLES + CHECKPOINTER_TABLES if table in existing
+        ]
+        if to_truncate:
+            conn.execute(
+                text(
+                    "TRUNCATE "
+                    + ", ".join(f'"{t}"' for t in to_truncate)
+                    + " RESTART IDENTITY CASCADE"
+                )
+            )
 
     yield
     with test_engine.begin() as conn:
@@ -93,16 +109,11 @@ def _clean_database(test_engine):
 @pytest.fixture
 def db_session(test_engine):
     """Create a fresh session for each test."""
-    connection = test_engine.connect()
-    transaction = connection.begin()
-    session = sessionmaker(autocommit=False, autoflush=False, bind=connection)()
+    session = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)()
 
     yield session
 
-    # Rollback the transaction to clean up after test
     session.close()
-    transaction.rollback()
-    connection.close()
 
 
 @pytest.fixture

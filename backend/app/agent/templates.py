@@ -92,15 +92,7 @@ def close_and_route_template(
         else ""
     )
 
-    next_step = (
-        f"\nReview the next step here: {product_page_url}"
-        if product_page_url
-        else ""
-    )
-
     return (
         f"You've selected {product_name}."
         f"{details}"
-        f"{next_step}\n"
-        "Your subscription has not been changed."
     )

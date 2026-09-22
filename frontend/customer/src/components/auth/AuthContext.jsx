@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { login, logout, me, signup, updateMe } from "@/api/auth.api";
 import { tokenStore } from "@/api/tokenStore";
 
@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- boot must validate the stored token against /auth/me on mount
     boot();
   }, [boot]);
 
@@ -70,5 +71,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

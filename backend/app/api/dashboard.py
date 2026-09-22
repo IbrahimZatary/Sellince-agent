@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
 from app.core.database import get_db
+from app.models.attribution import Attribution
 from app.models.conversation import Conversation
 from app.models.customer import Customer
 from app.models.message import Message
@@ -24,7 +25,7 @@ from app.schemas.dashboard import (
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
-WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 
 def _offer_category(product_name: str) -> str:
@@ -76,6 +77,18 @@ def dashboard_summary(
         db.query(Customer).filter(Customer.company_id == company_id).count()
     )
 
+    completed_attributions = (
+        db.query(Attribution)
+        .join(Conversation, Attribution.conversation_id == Conversation.id)
+        .filter(
+            Conversation.company_id == company_id,
+            Attribution.status == "completed",
+        )
+        .all()
+    )
+
+    completed_count = len(completed_attributions)
+
     replied_count = (
         db.query(Message.conversation_id)
         .join(Conversation, Message.conversation_id == Conversation.id)
@@ -99,7 +112,7 @@ def dashboard_summary(
         OverviewMetric(
             id="conversion",
             label="Conversion Rate",
-            value=f"{_pct(accepted_count, offer_count)}%",
+            value=f"{_pct(completed_count, offer_count)}%",
         ),
         OverviewMetric(
             id="customers",
@@ -108,34 +121,47 @@ def dashboard_summary(
         ),
     ]
 
-    day_start = datetime.now(timezone.utc).replace(
+    # Start from previous Sunday
+    now = datetime.now(timezone.utc).replace(
         tzinfo=None, hour=0, minute=0, second=0, microsecond=0
-    ) - timedelta(days=6)
+    )
+    days_since_sunday = (now.weekday() + 1) % 7  # Monday=0...Sunday=6 -> Sunday=0
+    day_start = now - timedelta(days=days_since_sunday)
     totals = (
         db.query(
-            func.date(Offer.created_at),
-            func.coalesce(func.sum(Offer.price), 0),
+            func.date(Attribution.created_at),
+            func.coalesce(func.sum(Attribution.price), 0),
         )
-        .filter(Offer.company_id == company_id, Offer.created_at >= day_start)
-        .group_by(func.date(Offer.created_at))
+        .join(Conversation, Attribution.conversation_id == Conversation.id)
+        .filter(
+            Conversation.company_id == company_id,
+            Attribution.status == "completed",
+            Attribution.created_at >= day_start,
+        )
+        .group_by(func.date(Attribution.created_at))
         .all()
     )
     revenue_by_day = {str(day): float(total) for day, total in totals}
     revenue_trend = [
         TrendPoint(
-            date=WEEKDAYS[day.weekday()],
+            date=WEEKDAYS[(day.weekday() + 1) % 7],
             revenue=revenue_by_day.get(str(day.date()), 0.0),
         )
         for day in (day_start + timedelta(days=offset) for offset in range(7))
     ]
 
-    category_totals = Counter(
-        _offer_category(o.product_name) for o in offers
-    )
-    total_offers = sum(category_totals.values())
+    category_revenue: "Counter[str] | dict[str, float]" = Counter()
+    for attr in completed_attributions:
+        category = _offer_category(attr.product_name)
+        category_revenue[category] += float(attr.price)
+    total_paid = sum(category_revenue.values()) or 0.0
+    # Every category the team actually offered appears — 0 where never paid —
+    # so the dashboard is complete (same principle as the funnel, which lists
+    # all stages). Add-ons is offered but never paid in the seed → 0, present.
+    offered_categories = {_offer_category(o.product_name) for o in offers}
     revenue_by_offer = [
-        OfferShare(category=category, value=_pct(count, total_offers))
-        for category, count in category_totals.items()
+        OfferShare(category=category, value=_pct(round(category_revenue[category], 2), total_paid))
+        for category in sorted(offered_categories)
     ]
 
     agent_autonomy = [
@@ -148,21 +174,86 @@ def dashboard_summary(
         db.query(Message, Conversation, Customer)
         .join(Conversation, Message.conversation_id == Conversation.id)
         .join(Customer, Conversation.customer_id == Customer.id)
-        .filter(Conversation.company_id == company_id)
+        .filter(
+            Conversation.company_id == company_id,
+            Message.sender.in_(["agent", "ai_agent"]),
+        )
         .order_by(Message.sent_at.desc())
-        .limit(10)
+        .limit(20)
         .all()
     )
+    conversation_ids = {conversation.id for _, conversation, _ in recent}
+    latest_offer_by_conversation = {}
+    completed_conv_ids = set()
+    declined_conv_ids = set()
+    sent_conv_ids = set()
+    if conversation_ids:
+        offers_for_activity = (
+            db.query(Offer)
+            .filter(Offer.conversation_id.in_(conversation_ids))
+            .order_by(Offer.created_at.desc())
+            .all()
+        )
+        for offer in offers_for_activity:
+            latest_offer_by_conversation.setdefault(offer.conversation_id, offer)
+
+        # Find conversations with completed attributions
+        completed_attributions_conv = (
+            db.query(Attribution.conversation_id)
+            .filter(
+                Attribution.conversation_id.in_(conversation_ids),
+                Attribution.status == "completed",
+            )
+            .distinct()
+            .all()
+        )
+        completed_conv_ids = {c[0] for c in completed_attributions_conv}
+
+        # Find conversations with declined offers
+        declined_offers_conv = (
+            db.query(Offer.conversation_id)
+            .filter(
+                Offer.conversation_id.in_(conversation_ids),
+                Offer.status == "declined",
+            )
+            .distinct()
+            .all()
+        )
+        declined_conv_ids = {c[0] for c in declined_offers_conv}
+
+        # Find conversations with sent offers (not declined, not completed)
+        sent_offers_conv = (
+            db.query(Offer.conversation_id)
+            .filter(
+                Offer.conversation_id.in_(conversation_ids),
+                Offer.status == "sent",
+            )
+            .distinct()
+            .all()
+        )
+        sent_conv_ids = {c[0] for c in sent_offers_conv}
+
+    def _activity_status(conversation):
+        if conversation.id in completed_conv_ids:
+            return "confirmed"
+        if conversation.id in declined_conv_ids:
+            return "declined"
+        if conversation.id in sent_conv_ids:
+            return "sent"
+        if conversation.status == "closed":
+            return "handed to human"
+        return "in progress"
+
     recent_activity = [
         ActivityRow(
             id=message.id,
             customer=customer.name,
             identifier=customer.phone,
             signal=customer.service_type or customer.current_plan,
-            action=(
-                message.text[:60] + "…" if len(message.text) > 60 else message.text
-            ),
-            status=conversation.status,
+            action=(latest_offer_by_conversation.get(conversation.id).product_name
+                    if latest_offer_by_conversation.get(conversation.id)
+                    else "No offer"),
+            status=_activity_status(conversation),
             timestamp=_relative_time(message.sent_at),
         )
         for message, conversation, customer in recent
@@ -175,7 +266,7 @@ def dashboard_summary(
             FunnelStage(stage="Engaged", count=conv_count, percentage=100),
             FunnelStage(stage="Replied", count=replied_count, percentage=_pct(replied_count, conv_count)),
             FunnelStage(stage="Offer Presented", count=offer_count, percentage=_pct(offer_count, conv_count)),
-            FunnelStage(stage="Closed", count=closed_count, percentage=_pct(closed_count, conv_count)),
+            FunnelStage(stage="Closed", count=completed_count, percentage=_pct(completed_count, conv_count)),
         ],
         revenueByOffer=revenue_by_offer,
         agentAutonomy=agent_autonomy,

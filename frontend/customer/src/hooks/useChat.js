@@ -12,13 +12,14 @@ const CHAT_ERROR_MESSAGE = "Your message could not be sent. Please try again.";
 
 let fallbackMessageSequence = 0;
 
-function createMessage(role, content) {
+function createMessage(role, content, action) {
   const fallbackMessageId = `${role}-${Date.now()}-${fallbackMessageSequence++}`;
 
   return {
     messageId: globalThis.crypto?.randomUUID?.() ?? fallbackMessageId,
     role,
     content,
+    action,
   };
 }
 
@@ -70,14 +71,20 @@ function useChat({ defaultOpen = false, onMessageSend } = {}) {
     try {
       const assistantReply = await onMessageSend(submittedMessage);
 
-      if (typeof assistantReply !== "string" || !assistantReply.trim()) {
+      const assistantText =
+        typeof assistantReply === "string" ? assistantReply : assistantReply?.response || "";
+      const assistantAction =
+        typeof assistantReply === "object" && assistantReply !== null
+          ? assistantReply.action
+          : undefined;
+      if (!assistantText.trim()) {
         throw new Error("Invalid assistant reply");
       }
 
       setConversationMessages((currentMessages) => [
         ...currentMessages,
         createMessage("customer", submittedMessage),
-        createMessage("assistant", assistantReply.trim()),
+        createMessage("assistant", assistantText.trim(), assistantAction),
       ]);
 
       // Do not erase text entered while the request was pending.

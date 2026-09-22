@@ -45,26 +45,6 @@ def _get_llm():
     return _LLM
 
 
-def _parse_intent(payload: str) -> dict:
-    text = payload.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
-    data = json.loads(text)
-    data["intent"] = data.get("intent") or "other"
-    if data["intent"] not in (
-        "wants_details",
-        "objection",
-        "accepts_offer",
-        "ready_to_pay",
-        "other",
-    ):
-        data["intent"] = "other"
-    data["objection_type"] = data.get("objection_type") or "none"
-    return data
-
-
 def _keyword_classify(message: str) -> dict:
     msg_lower = message.lower()
 
@@ -76,7 +56,7 @@ def _keyword_classify(message: str) -> dict:
     if any(w in msg_lower for w in [
         "i'll take", "i will take", "take it", "i want the offer", "i want this plan",
         "want the offer", "sign me up", "sounds good", "i accept", "accept the offer",
-        "let's do it", "lets do it", "go ahead",
+        "let's do it", "lets do it", "go ahead", "i want it",
     ]):
         return {"intent": "accepts_offer", "objection_type": "none"}
 
@@ -91,7 +71,7 @@ def _keyword_classify(message: str) -> dict:
     if any(w in msg_lower for w in [
         "more data", "details", "tell me", "explain", "features", "how much", "is it faster",
         "speed", "slow", "offer", "plan details", "difference", "compare", "more info",
-        "does the plan", "what are my options",
+        "does the plan", "what are my options", "upgrade",
     ]):
         return {"intent": "wants_details", "objection_type": "none"}
 
@@ -114,7 +94,14 @@ def understand_node(state: AgentState) -> AgentState:
                 SystemMessage(content=SYSTEM_PROMPT),
                 HumanMessage(content=message),
             ])
-            intent = _parse_intent(str(response.content))
+            intent = json.loads(str(response.content))
+            
+            # Override LLM misclassification: upgrade requests should be wants_details, not accepts_offer
+            msg_lower = message.lower()
+            if (intent.get("intent") == "accepts_offer" and 
+                any(w in msg_lower for w in ["upgrade", "more data", "plan upgrade", "change plan"])):
+                intent = {"intent": "wants_details", "objection_type": "none"}
+            
             state["intent"] = intent
             state["conversation_stage"] = determine_conversation_stage(intent)
             return state

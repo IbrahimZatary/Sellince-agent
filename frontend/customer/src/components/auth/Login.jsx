@@ -7,9 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authenticateUser } from "@/api/auth.api";
+import { loginCustomer } from "@/api/auth.api";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[0-9+\-\s]{7,30}$/;
 
 /**
  * Login Component
@@ -23,7 +23,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function Login() {
   const navigate = useNavigate();
   const [loginFormValues, setLoginFormValues] = useState({
-    email: "",
+    phone: "",
     password: "",
   });
   const [loginFormErrors, setLoginFormErrors] = useState({});
@@ -33,10 +33,10 @@ function Login() {
   function validateLoginForm(values) {
     const nextErrors = {};
 
-    if (!values.email.trim()) {
-      nextErrors.email = "Email is required.";
-    } else if (!EMAIL_REGEX.test(values.email.trim())) {
-      nextErrors.email = "Please enter a valid email address.";
+    if (!values.phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
+    } else if (!PHONE_REGEX.test(values.phone.trim())) {
+      nextErrors.phone = "Please enter a valid phone number.";
     }
 
     if (!values.password) {
@@ -81,12 +81,14 @@ function Login() {
     setIsSubmitting(true);
 
     try {
-      await authenticateUser({
-        email: loginFormValues.email.trim(),
+      const data = await loginCustomer({
+        phone: loginFormValues.phone.trim(),
         password: loginFormValues.password,
       });
-      // On success, navigate to onboarding or chat
-      navigate("/onboarding", { replace: true });
+      localStorage.setItem("customer_id", String(data.customer_id));
+      localStorage.setItem("customer_name", data.name);
+      localStorage.setItem("customer_access_token", data.access_token);
+      navigate("/chat", { replace: true });
     } catch (error) {
       const serverMessage =
         error.response?.data?.message ||
@@ -98,13 +100,7 @@ function Login() {
   }
 
   return (
-    <AuthLayout
-      title="Welcome back"
-      description="Enter your email and password to log in to your account."
-      footerPrompt="Don't have an account?"
-      footerActionText="Sign up"
-      footerActionHref="/signup"
-    >
+    <AuthLayout title="Welcome back" description="Sign in to continue to your Sellince assistant.">
       <form onSubmit={handleLoginSubmit} noValidate className="space-y-4">
         {loginRequestError ? (
           <Alert variant="destructive">
@@ -113,23 +109,23 @@ function Login() {
         ) : null}
 
         <div className="space-y-1.5 text-left">
-          <Label htmlFor="login-email">Email</Label>
+          <Label htmlFor="login-phone">Phone number</Label>
           <Input
-            id="login-email"
-            name="email"
-            type="email"
-            value={loginFormValues.email}
+            id="login-phone"
+            name="phone"
+            type="tel"
+            value={loginFormValues.phone}
             onChange={handleLoginFieldChange}
-            placeholder="name@company.com"
-            autoComplete="email"
-            aria-invalid={Boolean(loginFormErrors.email)}
-            aria-describedby={loginFormErrors.email ? "login-email-error" : undefined}
+            placeholder="0791111111"
+            autoComplete="tel"
+            aria-invalid={Boolean(loginFormErrors.phone)}
+            aria-describedby={loginFormErrors.phone ? "login-phone-error" : undefined}
             className="h-11 text-base md:text-sm"
             disabled={isSubmitting}
           />
-          {loginFormErrors.email ? (
-            <p id="login-email-error" role="alert" className="text-destructive text-xs">
-              {loginFormErrors.email}
+          {loginFormErrors.phone ? (
+            <p id="login-phone-error" role="alert" className="text-destructive text-xs">
+              {loginFormErrors.phone}
             </p>
           ) : null}
         </div>

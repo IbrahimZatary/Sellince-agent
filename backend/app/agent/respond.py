@@ -170,20 +170,41 @@ def respond_node(state: AgentState) -> AgentState:
         return state
 
     if stage == "CLOSE_DEAL":
+        checkout_url = (
+            f"/checkout?customer_id={state.get('customer_id')}"
+            f"&conversation_id={state.get('conversation_id')}"
+            f"&product_id={primary_offer.get('product_id') or primary_offer.get('id')}"
+            f"&product_name={offer_name}&price={offer_price}"
+        )
         state["response"] = close_and_route_template(
             product_name=offer_name,
             features=features,
             product_page_url=MOCK_PRODUCT_PAGE_URL,
         )
-        state["action"] = "deal_closed"
+        state["action"] = {
+            "type": "purchase",
+            "label": "Continue to Purchase",
+            "url": checkout_url
+        }
         return state
 
     if stage == "ROUTE_TO_PAYMENT":
-        state["response"] = (
-            f"You can continue to the payment step for "
-            f"the {offer_name}."
+        checkout_url = (
+            f"/checkout?customer_id={state.get('customer_id')}"
+            f"&conversation_id={state.get('conversation_id')}"
+            f"&product_id={primary_offer.get('product_id') or primary_offer.get('id')}"
+            f"&product_name={offer_name}&price={offer_price}"
         )
-        state["action"] = "route_to_payment"
+        state["response"] = close_and_route_template(
+            product_name=offer_name,
+            features=features,
+            product_page_url=MOCK_PRODUCT_PAGE_URL,
+        )
+        state["action"] = {
+            "type": "purchase",
+            "label": "Continue to Purchase",
+            "url": checkout_url
+        }
         return state
 
     # ENGAGE or no recognized stage: present the initial offer.

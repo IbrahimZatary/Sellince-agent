@@ -21,11 +21,13 @@ from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.models.attribution import Attribution
 from app.models.conversation import Conversation
+from app.models.customer import Customer
 from app.models.user import User
 from app.schemas.attributions import (
     AttributionCreate,
     AttributionRead,
     AttributionUpdate,
+    CheckoutComplete,
 )
 
 router = APIRouter(prefix="/attributions", tags=["attributions"])
@@ -38,9 +40,10 @@ def _attribution_read(row: Attribution) -> AttributionRead:
         customer_id=row.customer_id,
         product_id=row.product_id,
         product_name=row.product_name,
+        price=row.price,
         status=row.status,
         created_at=row.created_at,
-        updated_at=row.updated_at,
+        confirmed_at=row.confirmed_at,
     )
 
 
@@ -73,6 +76,10 @@ def create_attribution(
         customer_id=payload.customer_id,
         product_id=payload.product_id,
         product_name=payload.product_name,
+        # Freeze the agreed price right here — the same snapshot the model's
+        # NOT NULL price column and the AttributionCreate schema already own.
+        # Dropping it would make every insert violate NOT NULL on Postgres.
+        price=payload.price,
         status="pending",
     )
     db.add(row)
@@ -108,7 +115,8 @@ def update_attribution(
 
     if row.status == "pending" and payload.status in ("completed", "expired"):
         row.status = payload.status
-        row.updated_at = datetime.utcnow()
+        if payload.status == "completed":
+            row.confirmed_at = datetime.utcnow()
         db.commit()
         db.refresh(row)
     elif row.status != "pending":
@@ -118,6 +126,43 @@ def update_attribution(
     return _attribution_read(row)
 
 
+@router.post("/checkout/complete", response_model=AttributionRead)
+def complete_checkout(
+    payload: CheckoutComplete,
+    db: Session = Depends(get_db),
+):
+    """Complete the pending attribution belonging to this checkout URL."""
+    row = (
+        db.query(Attribution)
+        .join(Conversation, Attribution.conversation_id == Conversation.id)
+        .filter(
+            Attribution.conversation_id == payload.conversation_id,
+            Attribution.customer_id == payload.customer_id,
+            Attribution.product_id == payload.product_id,
+            Conversation.customer_id == payload.customer_id,
+            Attribution.status == "pending",
+        )
+        .order_by(Attribution.created_at.desc())
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="pending checkout not found")
+
+    customer = (
+        db.query(Customer)
+        .filter(Customer.id == row.customer_id)
+        .first()
+    )
+    if customer is None:
+        raise HTTPException(status_code=404, detail="customer not found")
+
+    row.status = "completed"
+    row.confirmed_at = datetime.utcnow()
+    customer.current_plan = row.product_name
+    customer.usage_percentage = 0
+    db.commit()
+    db.refresh(row)
+    return _attribution_read(row)
 @router.get("", response_model=list[AttributionRead])
 def list_attributions(
     current_user: User = Depends(get_current_user),

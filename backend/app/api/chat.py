@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.exceptions import AppException
 from app.models.conversation import Conversation
 from app.models.customer import Customer
+from app.models.attribution import Attribution
 from app.models.message import Message
 from app.models.offer import Offer
 from app.schemas.chat import ChatRequest, ChatResponse
@@ -71,6 +72,7 @@ def chat(
         conversation_id=conversation.id,
         state={
             "customer_id": req.customer_id,
+            "conversation_id": conversation.id,
             "message": req.message,
         },
     )
@@ -105,11 +107,42 @@ def chat(
                 )
             )
 
+    action = result.get("action")
+    if isinstance(action, dict) and action.get("type") == "purchase":
+        primary_offer = (result.get("recommendation") or {}).get("primary") or {}
+        product_id = str(primary_offer.get("product_id") or "checkout-default-product")
+        product_name = str(primary_offer.get("product_name") or offer.get("product") or "Selected plan")
+        price = _to_decimal(primary_offer.get("price") or (offer or {}).get("price"))
+        if price is not None:
+            attribution = (
+                db.query(Attribution)
+                .filter(
+                    Attribution.conversation_id == conversation.id,
+                    Attribution.customer_id == req.customer_id,
+                    Attribution.product_id == product_id,
+                    Attribution.status == "pending",
+                )
+                .order_by(Attribution.created_at.desc())
+                .first()
+            )
+            if attribution is None:
+                attribution = Attribution(
+                    conversation_id=conversation.id,
+                    customer_id=req.customer_id,
+                    product_id=product_id,
+                    product_name=product_name,
+                    price=price,
+                    status="pending",
+                )
+                db.add(attribution)
+                db.flush()
+            action["url"] = f"{action['url']}&attribution_id={attribution.id}"
+
     db.commit()
 
     return ChatResponse(
         response=result["response"],
         offer=result["offer"],
-        action=result["action"],
+        action=action,
         conversation_stage=result.get("conversation_stage"),
     )

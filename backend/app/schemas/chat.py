@@ -9,5 +9,5 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     offer: dict | None
-    action: str | None
+    action: str | dict | None = None
     conversation_stage: str | None = None
