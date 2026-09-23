@@ -15,10 +15,11 @@ def respond_node(state: AgentState) -> AgentState:
     customer = state.get("customer_data")
     recommendation = state.get("recommendation") or {}
     stage = state.get("conversation_stage")
+    trigger_reasons = state.get("trigger_reasons") or []
 
     primary_offer = recommendation.get("primary") or {}
 
-    if state.get("trigger_reason") == "customer_not_found":
+    if "customer_not_found" in trigger_reasons:
         state["response"] = "Customer profile could not be found."
         state["action"] = "abort"
         return state
@@ -45,11 +46,13 @@ def respond_node(state: AgentState) -> AgentState:
     )
     price = primary_offer.get("price")
     features = primary_offer.get("features", [])
+    target_segment = primary_offer.get("target_segment", "")
 
     if stage == "EXPLAIN_OFFER":
         state["response"] = explain_offer_template(
             product_name=product_name,
             features=features,
+            target_segment=target_segment,
         )
         state["action"] = "offer_explained"
         return state

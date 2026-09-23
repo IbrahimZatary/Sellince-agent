@@ -7,32 +7,17 @@ def initial_engagement_template(
     *,
     service_type: str | None = None,
 ) -> str:
-    if service_type == "fiber_home":
-        usage_message = (
-            f"Your recorded speed utilization is "
-            f"{usage_percentage}% on your {current_plan}."
-        )
-    elif service_type == "mobile_data":
-        usage_message = (
-            f"You've used {usage_percentage}% of the data "
-            f"in your {current_plan}."
-        )
-    else:
-        usage_message = (
-            f"Your recorded usage is {usage_percentage}% "
-            f"on your {current_plan}."
-        )
-
     return (
         f"Hi {customer_name},\n"
-        f"{usage_message}\n"
-        f"An upgrade option is {product_name}, "
-        f"listed at {price} JOD.\n"
+        f"I noticed you're using {usage_percentage}% of your {current_plan}.\n"
+        f"We have a great offer: {product_name} for just {price} JOD.\n"
         "Would you like to hear more about it?"
     )
 
 
-def _format_features(features: list[str]) -> str:
+def _get_three_features(
+    features: list[str],
+) -> list[str]:
     available = [
         feature.strip()
         for feature in features
@@ -41,7 +26,7 @@ def _format_features(features: list[str]) -> str:
         and feature.strip() != "Feature information unavailable"
     ]
 
-    return "\n".join(f"- {feature}" for feature in available)
+    return available[:3]
 
 
 def explain_offer_template(
@@ -59,12 +44,18 @@ def explain_offer_template(
         else [feature_1, feature_2, feature_3]
     )
 
-    feature_text = _format_features(selected_features)
-    details = f"\n{feature_text}" if feature_text else ""
+    selected_features = _get_three_features(selected_features)
+
+    feature_lines = "\n".join(
+        f"• {feature}"
+        for feature in selected_features
+    )
 
     return (
-        f"Here are the details of {product_name}:"
-        f"{details}\n"
+        "Great! Here are the details:\n"
+        f"{product_name} includes:\n"
+        f"{feature_lines}\n"
+        f"This is perfect for {target_segment} like you.\n"
         "Would you like to proceed with this offer?"
     )
 
@@ -84,23 +75,23 @@ def close_and_route_template(
         else [feature_1, feature_2, feature_3]
     )
 
-    feature_text = _format_features(selected_features)
+    selected_features = _get_three_features(selected_features)
 
-    details = (
-        f"\nYour selected product includes:\n{feature_text}"
-        if feature_text
-        else ""
+    feature_lines = "\n".join(
+        f"• {feature}"
+        for feature in selected_features
     )
 
-    next_step = (
-        f"\nReview the next step here: {product_page_url}"
+    product_link = (
+        product_page_url
         if product_page_url
-        else ""
+        else "[Link to Mock Product Page]"
     )
 
     return (
-        f"You've selected {product_name}."
-        f"{details}"
-        f"{next_step}\n"
-        "Your subscription has not been changed."
+        f"Excellent! Your new {product_name} will be activated now.\n"
+        f"Click here to complete your upgrade: {product_link}\n"
+        "Your new plan includes:\n"
+        f"{feature_lines}\n"
+        "Thank you for choosing us!"
     )

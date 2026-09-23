@@ -12,11 +12,11 @@ def get_customer(db, customer_id: int) -> Customer | None:
     )
 
 
-def get_or_create_open_conversation(
+def get_open_conversation(
     db,
     customer: Customer,
-) -> Conversation:
-    conversation = (
+) -> Conversation | None:
+    return (
         db.query(Conversation)
         .filter(
             Conversation.customer_id == customer.id,
@@ -27,9 +27,11 @@ def get_or_create_open_conversation(
         .first()
     )
 
-    if conversation:
-        return conversation
 
+def create_new_conversation(
+    db,
+    customer: Customer,
+) -> Conversation:
     conversation = Conversation(
         customer_id=customer.id,
         company_id=customer.company_id,
@@ -41,6 +43,54 @@ def get_or_create_open_conversation(
     db.refresh(conversation)
 
     return conversation
+
+
+def choose_conversation(
+    db,
+    customer: Customer,
+) -> Conversation:
+    existing_conversation = get_open_conversation(
+        db=db,
+        customer=customer,
+    )
+
+    if existing_conversation is None:
+        print("\nNo existing open conversation found.")
+        print("Creating a new conversation...")
+
+        return create_new_conversation(
+            db=db,
+            customer=customer,
+        )
+
+    print(
+        f"\nExisting open conversation found: "
+        f"{existing_conversation.id}"
+    )
+
+    choice = input(
+        "Start a new conversation? (y/n): "
+    ).strip().lower()
+
+    if choice in {"y", "yes"}:
+        conversation = create_new_conversation(
+            db=db,
+            customer=customer,
+        )
+
+        print(
+            f"New conversation created: "
+            f"{conversation.id}"
+        )
+
+        return conversation
+
+    print(
+        f"Continuing conversation: "
+        f"{existing_conversation.id}"
+    )
+
+    return existing_conversation
 
 
 def main() -> None:
@@ -72,16 +122,20 @@ def main() -> None:
             )
             return
 
-        conversation = get_or_create_open_conversation(
-            db=db,
-            customer=customer,
-        )
-
         print("\nCustomer found:")
         print(f"Name: {customer.name}")
         print(f"Plan: {customer.current_plan}")
         print(f"Usage: {customer.usage_percentage}%")
         print(f"Segment: {customer.segment}")
+        print(
+            f"Contract End Date: "
+            f"{customer.contract_end_date}"
+        )
+
+        conversation = choose_conversation(
+            db=db,
+            customer=customer,
+        )
 
         print(
             f"\nConversation ID: {conversation.id}"
@@ -128,6 +182,10 @@ def main() -> None:
             print(
                 "Action:",
                 result.get("action"),
+            )
+            print(
+                "Triggers:",
+                result.get("trigger_reasons"),
             )
             print(
                 "Product:",

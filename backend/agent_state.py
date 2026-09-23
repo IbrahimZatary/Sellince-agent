@@ -5,7 +5,7 @@ class AgentState(TypedDict):
     customer_id: int
     message: str
     customer_data: Optional[dict]
-    trigger_reason: Optional[str]
+    trigger_reasons: Optional[list[str]]
     intent: Optional[dict]
     recommendation: Optional[dict]
 

@@ -6,19 +6,37 @@ from app.models.customer import Customer
 from app.rag.customer_recommendation import UPGRADE_RULES
 
 
-def check_triggers(customer: dict) -> str | None:
+def check_triggers(customer: dict) -> list[str]:
+    triggers = []
+
     service_type = customer.get("service_type")
     rule = UPGRADE_RULES.get(service_type)
 
     # Mobile usage >= 90%, Fiber usage >= 85%.
     if rule and customer["usage_percentage"] >= rule["threshold"]:
-        return (
-            "high_data_usage"
-            if service_type == "mobile_data"
-            else "high_fiber_usage"
+        if service_type == "mobile_data":
+            triggers.append("high_data_usage")
+        else:
+            triggers.append("high_fiber_usage")
+
+    # 5G offer:
+    # Mobile customer + interested in 5G + not already on 5G.
+    if service_type == "mobile_data":
+        interests = customer.get("interests") or ""
+        current_plan = customer.get("current_plan") or ""
+        current_speed = customer.get("speed") or ""
+
+        interested_in_5g = "5G" in interests.upper()
+        already_on_5g = (
+            "5G" in current_plan.upper()
+            or current_speed.upper() == "5G"
         )
 
-    # Contracts ending today or within the next 29 days.
+        if interested_in_5g and not already_on_5g:
+            triggers.append("5g_interest")
+
+    # Retention:
+    # Contract expires in less than 30 days.
     end_date = customer.get("contract_end_date")
 
     if end_date:
@@ -27,16 +45,16 @@ def check_triggers(customer: dict) -> str | None:
         ).days
 
         if 0 <= days_remaining < 30:
-            return "contract_expiring"
+            triggers.append("contract_expiring")
 
     # Preserve the existing prepaid trigger.
     if (
         customer.get("segment") == "Heavy User"
-        and customer.get("current_plan") == "Prepaid Plan"
+        and customer.get("current_plan") == "PrepaidPlan"
     ):
-        return "prepaid_heavy_user"
+        triggers.append("prepaid_heavy_user")
 
-    return None
+    return triggers
 
 
 def detect_node(state: AgentState) -> AgentState:
@@ -51,7 +69,7 @@ def detect_node(state: AgentState) -> AgentState:
 
         if row is None:
             state["customer_data"] = None
-            state["trigger_reason"] = "customer_not_found"
+            state["trigger_reasons"] = ["customer_not_found"]
             return state
 
         state["customer_data"] = {
@@ -71,7 +89,7 @@ def detect_node(state: AgentState) -> AgentState:
             "location": row.location,
         }
 
-        state["trigger_reason"] = check_triggers(
+        state["trigger_reasons"] = check_triggers(
             state["customer_data"]
         )
 
