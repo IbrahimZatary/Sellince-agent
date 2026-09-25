@@ -1,0 +1,14 @@
+[
+  {
+    "id": "fiber_mobile_bundle",
+    "name": "Fiber + Mobile Bundle",
+    "price": 45,
+    "description": "High-speed home fiber paired with mobile data plan for heavy streamers."
+  },
+  {
+    "id": "speed_boost",
+    "name": "Speed Boost 100Mbps",
+    "price": 25,
+    "description": "Extra speed add-on for high traffic usage."
+  }
+]

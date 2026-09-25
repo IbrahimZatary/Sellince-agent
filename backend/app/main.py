@@ -1,49 +1,17 @@
-﻿from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from app.api.chat import router as chat_router
 
-from app.core.config import settings
-from app.core.exceptions import AppException, app_exception_handler
-from app.api.auth import router as auth_router
-from app.core.database import get_db
-from graph import compiled_graph
-
-app = FastAPI(title=settings.PROJECT_NAME)
-
-app.add_exception_handler(AppException, app_exception_handler)
+app = FastAPI(title="Sellince Agent API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api/v1")
+# Register the modular chat endpoints
+app.include_router(chat_router, prefix="/api")
 
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
-
-
-class ChatRequest(BaseModel):
-    customer_id: int = Field(..., gt=0)
-    message: str = Field(..., min_length=1)
-
-
-@app.post("/api/chat", status_code=status.HTTP_200_OK)
-def chat_endpoint(payload: ChatRequest, db: Session = Depends(get_db)):
-    initial_state = {
-        "customer_id": payload.customer_id,
-        "message": payload.message,
-        "_db": db,
-    }
-    result = compiled_graph.invoke(initial_state)
-    return {
-        "response": result.get("response"),
-        "offer": result.get("offer"),
-        "action": result.get("action", "ask_question"),
-    }

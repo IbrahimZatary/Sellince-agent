@@ -1,6 +1,8 @@
-﻿import json
+from dotenv import load_dotenv
+load_dotenv()
+import json
 import os
-from agent_state import AgentState
+from app.agent.agent_state import AgentState
 
 try:
     from groq import Groq
@@ -39,7 +41,7 @@ Return ONLY a JSON object with this exact structure:
 }}
 """
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="qwen/qwen3.8-27b",
                 messages=[
                     {"role": "system", "content": "You are a customer intent extraction engine. Respond strictly with JSON."},
                     {"role": "user", "content": prompt},

@@ -1,4 +1,3 @@
-﻿from datetime import date
 from unittest.mock import MagicMock
 import pytest
 from graph import compiled_graph
@@ -19,10 +18,8 @@ def test_graph_e2e_high_usage_upsell():
     mock_customer = MagicMock()
     mock_customer.id = 1
     mock_customer.name = "Sara"
-    mock_customer.phone = "0790000001"
     mock_customer.current_plan = "5GB Data Plan"
     mock_customer.usage_percentage = 95.0
-    mock_customer.contract_end_date = date(2026, 12, 31)
     mock_customer.segment = "retail"
 
     mock_db = create_mock_db(customer=mock_customer)
@@ -33,16 +30,25 @@ def test_graph_e2e_high_usage_upsell():
         "_db": mock_db,
     }
 
+    # Execute full LangGraph pipeline
     final_state = compiled_graph.invoke(initial_state)
 
+    # 1. State integrity checks
     assert "customer_data" in final_state
     assert final_state["customer_data"]["name"] == "Sara"
+
+    # 2. Recommendation verification
     assert final_state.get("recommendation") is not None
     assert "primary" in final_state["recommendation"]
     assert isinstance(final_state["recommendation"]["primary"], dict)
+
+    # 3. Response verification
     assert "response" in final_state
     assert isinstance(final_state["response"], str)
     assert len(final_state["response"]) > 0
+
+    # 4. Action verification
+    assert final_state.get("action") in ["offer", "recommend"]
 
 
 # ---------------------------------------------------------------------
@@ -53,10 +59,8 @@ def test_graph_e2e_normal_usage_inquiry():
     mock_customer = MagicMock()
     mock_customer.id = 2
     mock_customer.name = "Ahmad"
-    mock_customer.phone = "0790000002"
     mock_customer.current_plan = "50GB Ultra Plan"
     mock_customer.usage_percentage = 20.0
-    mock_customer.contract_end_date = date(2026, 12, 31)
     mock_customer.segment = "retail"
 
     mock_db = create_mock_db(customer=mock_customer)
@@ -90,5 +94,7 @@ def test_graph_e2e_customer_not_found():
 
     final_state = compiled_graph.invoke(initial_state)
 
+    # Customer data should remain None
     assert final_state.get("customer_data") is None
-    assert "response" in final_state or final_state.get("action") == "abort"
+    # Graph should output a fallback message or set an abort action
+    assert "response" in final_state or final_state.get("action") == "abort"    
