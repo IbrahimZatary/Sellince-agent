@@ -1,19 +1,38 @@
-from fastapi import APIRouter, status
-from app.schemas.chat import ChatRequest, ChatResponse
+from typing import Optional
+from fastapi import APIRouter, status, Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.models.customer import Customer
 from app.agent.graph import compiled_graph
 
 router = APIRouter(tags=["Chat"])
 
-@router.post("/chat", response_model=ChatResponse, status_code=status.HTTP_200_OK)
-def chat_endpoint(payload: ChatRequest):
+# Safe schema that accepts the frontend's null value
+class SafeChatRequest(BaseModel):
+    customer_id: Optional[int] = None
+    message: str
+
+@router.post("/chat", status_code=status.HTTP_200_OK)
+def chat_endpoint(
+    payload: SafeChatRequest,
+    db: Session = Depends(get_db)
+):
+    # If the frontend sends a null ID, safely fall back to the first seeded customer
+    real_customer_id = payload.customer_id
+    if not real_customer_id:
+        customer = db.query(Customer).first()
+        real_customer_id = customer.id if customer else 1
+
     initial_state = {
-        "customer_id": payload.customer_id,
+        "customer_id": real_customer_id,
         "message": payload.message,
     }
     
     result = compiled_graph.invoke(
         initial_state,
-        config={"configurable": {"thread_id": str(payload.customer_id)}}
+        config={"configurable": {"thread_id": str(real_customer_id)}}
     )
     
     return {
