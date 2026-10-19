@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Geist Variable", sans-serif;
+
+  --text-hero: 2.625rem;
+  --text-hero--line-height: 0.98;
+  --text-hero-md: 3.25rem;
+  --text-hero-md--line-height: 0.98;
+  --text-hero-xl: 3.75rem;
+  --text-hero-xl--line-height: 0.98;
+  --text-hero-2xl: 4rem;
+  --text-hero-2xl--line-height: 0.98;
+  --text-logo: 1.9375rem;
+  --text-micro: 0.58rem;
+  --text-control: 0.8rem;
+
+  --tracking-label: 0.14em;
+  --tracking-step: 0.04em;
+  --tracking-step-wide: 0.08em;
+
+  --spacing-hero: 160%;
+  --spacing-hero-sm: 125%;
+  --spacing-hero-max: 70svh;
+
+  --shadow-card: var(--shadow-xs);
+  --shadow-launcher: var(--shadow-lg);
+  --shadow-float: var(--shadow-xl);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-inverse: var(--inverse);
+  --color-inverse-foreground: var(--inverse-foreground);
+  --color-chat: var(--chat);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  /* shadcn aliases map to the small Sellince theme above. */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-control-sm: min(var(--radius-md), 10px);
+  --radius-control: min(var(--radius-md), 12px);
+  --radius-tip: 2px;
+}
+
+:root {
+  --background: #fbfaf8;
+  --surface: #ffffff;
+  --foreground: #111111;
+  --primary: #ff7f00;
+  --primary-foreground: var(--foreground);
+  --muted: #f3f2ef;
+  --muted-foreground: #555861;
+  --border: #c8c8c6;
+  --inverse: #000000;
+  --inverse-foreground: #ffffff;
+  --chat: #f8f7f5;
+  --success: #16803f;
+  --danger: #c72c41;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--danger);
+  --input: var(--border);
+  --ring: var(--primary);
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

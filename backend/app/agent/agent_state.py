@@ -15,3 +15,5 @@ class AgentState(TypedDict, total=False):
     stage: Optional[str]
     history: List[Dict[str, str]]
     action_payload: dict
+    is_initial_turn: bool
+    detected_intent: str
