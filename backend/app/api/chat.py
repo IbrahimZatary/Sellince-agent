@@ -30,9 +30,12 @@ def chat(
     req: ChatRequest,
     db: Session = Depends(get_db),
 ):
-    customer = db.query(Customer).filter(
-        Customer.id == req.customer_id
-    ).first()
+    # Get customer from PostgreSQL
+    customer = (
+        db.query(Customer)
+        .filter(Customer.id == req.customer_id)
+        .first()
+    )
 
     if not customer:
         raise AppException(
@@ -41,12 +44,16 @@ def chat(
             message="Customer not found",
         )
 
+    # Use the existing open conversation
     conversation = get_open_conversation(
         db,
         customer_id=req.customer_id,
         company_id=customer.company_id,
     )
 
+    # Run Kareem's agent with PostgreSQL checkpoint persistence.
+    # Using the same conversation_id also allows the proactive
+    # session state to continue when the customer sends a message.
     result = run_agent_turn(
         conversation_id=conversation.id,
         state={
@@ -77,11 +84,13 @@ def chat(
     # in this conversation
     offer = result.get("offer")
 
-    if offer:
+    if isinstance(offer, dict) and offer:
         price = _to_decimal(offer.get("price"))
+
         product_name = (
             offer.get("product")
             or offer.get("product_name")
+            or offer.get("name")
         )
 
         if price is not None and product_name:
@@ -111,27 +120,65 @@ def chat(
     action = result.get("action")
 
     if isinstance(action, dict) and action.get("type") == "purchase":
-        primary_offer = (
-            (result.get("recommendation") or {}).get("primary") or {}
-        )
+        recommendation = result.get("recommendation") or {}
 
-        product_id = str(
+        # Supports both:
+        # Kareem: recommendation = product
+        # Previous agent: recommendation = {"primary": product}
+        if isinstance(recommendation, dict):
+            primary_offer = (
+                recommendation.get("primary")
+                if "primary" in recommendation
+                else recommendation
+            )
+        else:
+            primary_offer = None
+
+        # Preserve the proactive offer if no recommendation exists
+        if not primary_offer:
+            primary_offer = result.get("active_offer") or {}
+
+        # Final fallback: use the returned offer
+        if not primary_offer and isinstance(offer, dict):
+            primary_offer = offer
+
+        if not isinstance(primary_offer, dict):
+            primary_offer = {}
+
+        product_id = (
             primary_offer.get("product_id")
-            or "checkout-default-product"
+            or primary_offer.get("id")
         )
 
-        product_name = str(
+        product_name = (
             primary_offer.get("product_name")
-            or (offer or {}).get("product")
-            or "Selected plan"
+            or primary_offer.get("product")
+            or primary_offer.get("name")
+            or (
+                offer.get("product")
+                or offer.get("product_name")
+                or offer.get("name")
+                if isinstance(offer, dict)
+                else None
+            )
         )
 
-        price = _to_decimal(
-            primary_offer.get("price")
-            or (offer or {}).get("price")
-        )
+        raw_price = primary_offer.get("price")
 
-        if price is not None:
+        if raw_price is None and isinstance(offer, dict):
+            raw_price = offer.get("price")
+
+        price = _to_decimal(raw_price)
+
+        # Only create attribution for an actual offer
+        # with a product ID, product name, and valid price.
+        if (
+            product_id is not None
+            and product_name
+            and price is not None
+        ):
+            product_id = str(product_id)
+
             attribution = (
                 db.query(Attribution)
                 .filter(
@@ -153,6 +200,7 @@ def chat(
                     price=price,
                     status="pending",
                 )
+
                 db.add(attribution)
                 db.flush()
 
@@ -160,11 +208,15 @@ def chat(
                 f"{action['url']}&attribution_id={attribution.id}"
             )
 
+        else:
+            # Prevent checkout when no valid product is available
+            action = "chat"
+
     db.commit()
 
     return ChatResponse(
         response=result["response"],
-        offer=result.get("offer"),
+        offer=offer,
         action=action,
         conversation_stage=result.get("conversation_stage"),
     )

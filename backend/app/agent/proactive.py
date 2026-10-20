@@ -95,7 +95,7 @@ def proactive_offer_node(state: AgentState) -> dict:
         return {
             "customer_profile": profile,
             "active_offer": product,
-            "recommendation": {"primary": product},
+            "recommendation": product,
             "response": opening_message,
             "conversation_stage": "ENGAGE",
         }

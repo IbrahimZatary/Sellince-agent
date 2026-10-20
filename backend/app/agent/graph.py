@@ -23,6 +23,25 @@ def route_after_detect(state: AgentState) -> str:
     return "understand"
 
 
+def route_after_understand(state: AgentState):
+    # Extract the dictionary of intents from the state
+    intent_data = state.get("intent") or {}
+    needs = intent_data.get("needs", [])
+
+    # Convert all needs to a single lowercase string for easy checking
+    needs_str = " ".join(needs).lower()
+
+    # Check if the user explicitly wants an upgrade or offer
+    sales_keywords = ["upgrade", "buy", "offer", "purchase", "renew", "deal"]
+
+    # If the only need detected was from a complaint like "slow",
+    # handle it in support (respond), not sales (recommend)
+    if any(keyword in needs_str for keyword in sales_keywords):
+        return "recommend"
+
+    # Default to customer support and general chat
+    return "respond"
+
 def build_graph():
     graph = StateGraph(AgentState)
 
@@ -55,8 +74,17 @@ def build_graph():
         },
     )
 
-    graph.add_edge("understand", "recommend")
+    graph.add_conditional_edges(
+        "understand",
+        route_after_understand,
+        {
+            "recommend": "recommend",
+            "respond": "respond",
+        },
+    )
+
     graph.add_edge("recommend", "respond")
+
     graph.add_edge("respond", END)
 
     # Proactive flow stops after generating opening message
