@@ -24,6 +24,7 @@ class AgentState(TypedDict, total=False):
 
     # Conversation management
     conversation_stage: Optional[str]
+    history: list[dict[str, str]]
 
     # Agent output
     response: Optional[str]
