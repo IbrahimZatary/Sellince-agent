@@ -1,114 +1,239 @@
-import json
 
-from langchain_core.messages import HumanMessage, SystemMessage
+import json
+import os
+
+from dotenv import load_dotenv
 
 from app.agent.agent_state import AgentState
 from app.agent.conversation import determine_conversation_stage
-from app.rag.response_generator import get_llm
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 
 
-SYSTEM_PROMPT = """
-You classify customer messages for a telecom sales conversation.
+load_dotenv()
 
-Return ONLY valid JSON in this exact format:
-{
-  "intent": "wants_details | objection | accepts_offer | ready_to_pay | other",
-  "objection_type": "price | features | need | none"
+_GROQ_CLIENT = None
+
+MODEL_NAME = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+
+VALID_INTENTS = {
+    "wants_details",
+    "objection",
+    "accepts_offer",
+    "ready_to_pay",
+    "other",
 }
 
-Rules:
-- wants_details: the customer asks a question or requests more information about the offer.
-- objection: the customer expresses concern, hesitation, rejection, or dissatisfaction.
-- accepts_offer: the customer clearly agrees to take or accept the offer, for example:
-  "I want the offer", "I'll take it", "I want this plan", "sounds good, I accept".
-- ready_to_pay: the customer explicitly mentions payment, checkout, paying, or proceeding to payment.
-- other: none of the above.
 
-Important:
-- Agreement to take the offer is accepts_offer, NOT wants_details.
-- Only classify as wants_details when the customer is actually asking for information.
-- If the customer explicitly mentions payment, ready_to_pay takes priority over accepts_offer.
+def _get_client():
+    global _GROQ_CLIENT
 
-Do not include explanations outside the JSON.
-"""
+    if _GROQ_CLIENT is None and Groq:
+        api_key = os.getenv("GROQ_API_KEY")
 
-_LLM = None
+        if api_key:
+            _GROQ_CLIENT = Groq(api_key=api_key)
+
+    return _GROQ_CLIENT
 
 
-def _get_llm():
-    global _LLM
-    if _LLM is None:
-        try:
-            _LLM = get_llm()
-        except RuntimeError:
-            _LLM = None
-    return _LLM
+def _as_list(value):
+    if not isinstance(value, list):
+        return []
 
-
-def _keyword_classify(message: str) -> dict:
-    msg_lower = message.lower()
-
-    if any(w in msg_lower for w in [
-        "pay", "payment", "checkout", "installment", "installments", "bank transfer", "paid",
-    ]):
-        return {"intent": "ready_to_pay", "objection_type": "none"}
-
-    if any(w in msg_lower for w in [
-        "i'll take", "i will take", "take it", "i want the offer", "i want this plan",
-        "want the offer", "sign me up", "sounds good", "i accept", "accept the offer",
-        "let's do it", "lets do it", "go ahead", "i want it",
-    ]):
-        return {"intent": "accepts_offer", "objection_type": "none"}
-
-    price_concerns = ["expensive", "too much", "pricing", "can't afford", "cant afford", "budget"]
-    if any(w in msg_lower for w in price_concerns + [
-        "no thanks", "not interested", "maybe later", "not sure", "don't want", "dont want",
-        "i'm good", "im good", "changed my mind", "hesitate", "hold on", "wait",
-    ]):
-        objection_type = "price" if any(w in msg_lower for w in price_concerns) else "features"
-        return {"intent": "objection", "objection_type": objection_type}
-
-    if any(w in msg_lower for w in [
-        "more data", "details", "tell me", "explain", "features", "how much", "is it faster",
-        "speed", "slow", "offer", "plan details", "difference", "compare", "more info",
-        "does the plan", "what are my options", "upgrade",
-    ]):
-        return {"intent": "wants_details", "objection_type": "none"}
-
-    return {"intent": "other", "objection_type": "none"}
+    return [
+        item for item in value
+        if isinstance(item, str)
+    ]
 
 
 def understand_node(state: AgentState) -> AgentState:
-    """Stage 2: UNDERSTAND Node powered by Groq.
-
-    Classifies the customer message into an intent (wants_details / objection /
-    accepts_offer / ready_to_pay / other) and maps it to a conversation stage.
-    Falls back to deterministic keyword classification when Groq is unavailable.
     """
+    Stage 2: UNDERSTAND
+
+    Uses Kareem's Groq-based extraction of needs,
+    questions and objections.
+
+    Adds the original sales intent and conversation
+    stage required by the existing agent workflow.
+    """
+
     message = state.get("message") or ""
-    llm = _get_llm()
+    client = _get_client()
 
-    if llm:
+    parsed = None
+
+    if client:
         try:
-            response = llm.invoke([
-                SystemMessage(content=SYSTEM_PROMPT),
-                HumanMessage(content=message),
-            ])
-            intent = json.loads(str(response.content))
-            
-            # Override LLM misclassification: upgrade requests should be wants_details, not accepts_offer
-            msg_lower = message.lower()
-            if (intent.get("intent") == "accepts_offer" and 
-                any(w in msg_lower for w in ["upgrade", "more data", "plan upgrade", "change plan"])):
-                intent = {"intent": "wants_details", "objection_type": "none"}
-            
-            state["intent"] = intent
-            state["conversation_stage"] = determine_conversation_stage(intent)
-            return state
-        except Exception as exc:
-            print(f"[Understand] LLM classify failed, falling back to heuristics: {exc}")
+            prompt = f"""
+Analyze this telecom customer message and extract its intent.
 
-    intent = _keyword_classify(message)
-    state["intent"] = intent
-    state["conversation_stage"] = determine_conversation_stage(intent)
+Customer message:
+{json.dumps(message, ensure_ascii=False)}
+
+Conversation context:
+Current offer:
+{json.dumps(state.get("active_offer") or state.get("offer"), ensure_ascii=False, default=str)}
+
+Previous conversation stage:
+{state.get("conversation_stage")}
+
+Return ONLY a valid JSON object with this exact structure:
+{{
+    "intent": "wants_details | objection | accepts_offer | ready_to_pay | other",
+    "objection_type": "price | features | need | none",
+    "needs": [],
+    "questions": [],
+    "objections": []
+}}
+
+Intent classification:
+- wants_details: customer asks for details about an offer.
+- objection: customer expresses hesitation or concern about an offer.
+- accepts_offer: customer explicitly accepts an offer.
+- ready_to_pay: customer explicitly requests checkout or payment.
+- other: none of the above.
+
+Rules:
+- Explicit payment or checkout intent takes priority over acceptance.
+- Do not classify a casual agreement as acceptance without context.
+- Do not interpret a technical complaint as an automatic purchase request.
+- Keep needs, questions, and objections as lists of strings.
+- Do not invent customer information or product offers.
+"""
+
+            completion = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a telecom customer intent extraction "
+                            "engine. Return strictly valid JSON."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                temperature=0.0,
+                response_format={"type": "json_object"},
+            )
+
+            parsed = json.loads(
+                completion.choices[0].message.content or "{}"
+            )
+
+            if not isinstance(parsed, dict):
+                parsed = None
+
+        except Exception as exc:
+            print(
+                f"[Groq Understand] "
+                f"Falling back to heuristics: {exc}"
+            )
+
+    # Preserve Kareem's deterministic fallback
+    # when Groq is unavailable.
+    if parsed is None:
+        msg_lower = message.lower()
+
+        needs = []
+        questions = []
+        objections = []
+
+        if any(w in msg_lower for w in [
+            "upgrade",
+            "more data",
+            "change my plan",
+            "need data",
+            "slow",
+            "run out",
+            "gb",
+        ]):
+            needs.append("plan upgrade")
+
+        if any(w in msg_lower for w in [
+            "bill",
+            "price",
+            "cost",
+            "cheaper",
+            "expensive",
+        ]):
+            needs.append("billing inquiry")
+
+        if any(w in msg_lower for w in [
+            "renew",
+            "contract",
+            "expire",
+            "end date",
+        ]):
+            needs.append("contract renewal")
+
+        if "?" in message or any(w in msg_lower for w in [
+            "how",
+            "what",
+            "when",
+            "where",
+            "why",
+            "can i",
+            "is there",
+        ]):
+            questions.append(message.strip())
+
+        if any(w in msg_lower for w in [
+            "too expensive",
+            "expensive",
+            "not interested",
+            "dont want",
+            "don't want",
+            "no thanks",
+        ]):
+            objections.append("price or interest concern")
+
+        # The original fallback does not classify
+        # sales acceptance or payment.
+        parsed = {
+            "intent": "other",
+            "objection_type": "none",
+            "needs": needs,
+            "questions": questions,
+            "objections": objections,
+        }
+
+    intent_type = parsed.get("intent", "other")
+
+    if intent_type not in VALID_INTENTS:
+        intent_type = "other"
+
+    objection_type = parsed.get("objection_type", "none")
+
+    if objection_type not in {
+        "price",
+        "features",
+        "need",
+        "none",
+    }:
+        objection_type = "none"
+
+    intent_data = {
+        "intent": intent_type,
+        "objection_type": objection_type,
+        "needs": _as_list(parsed.get("needs")),
+        "questions": _as_list(parsed.get("questions")),
+        "objections": _as_list(parsed.get("objections")),
+    }
+
+    state["intent"] = intent_data
+
+    # Use the existing conversation-stage mapping.
+    stage = determine_conversation_stage(intent_data)
+
+    if stage is not None:
+        state["conversation_stage"] = stage
+
     return state
