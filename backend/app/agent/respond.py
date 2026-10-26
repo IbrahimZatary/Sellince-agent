@@ -1,6 +1,6 @@
 
 import os
-
+import re
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -79,6 +79,15 @@ def _resolve_stage(state: AgentState) -> str | None:
 
     return None
 
+def _language_rule(message: str) -> str:
+    """Pick the reply language in code instead of letting the LLM guess."""
+    if re.search(r"[\u0600-\u06FF]", message or ""):
+        return "Reply in Arabic, matching the customer's dialect."
+
+    return (
+        "Reply in English. "
+        "Do not switch to another language unless the customer does."
+    )
 
 def respond_node(state: AgentState) -> AgentState:
     """Generate a contextual Groq response using Kareem's approach."""
@@ -260,9 +269,7 @@ STAGE-SPECIFIC BEHAVIOR:
   Understand the customer's telecom needs and explore relevant
   sales opportunities without turning into technical support.
 LANGUAGE:
-Reply in the same language and dialect as the customer.
-Support English, Arabic, Jordanian Arabic, and Arabizi.
-
+{_language_rule(user_message)}
 STYLE:
 Be natural, helpful, and concise, usually 2-4 sentences.
 Do not repeat the same product pitch unnecessarily.
