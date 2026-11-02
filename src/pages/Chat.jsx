@@ -17,7 +17,7 @@ export default function Chat({
   onMessageSubmit,
 }) {
   return (
-    <main className="safe-top bg-chat flex h-dvh flex-col">
+    <main className="safe-top bg-background flex h-dvh flex-col">
       <ChatHeader backLabel={backLabel} onBack={onBack} isConnected={isConnected} />
       <MessageList
         messages={messages}

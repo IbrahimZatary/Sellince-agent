@@ -51,23 +51,23 @@ export default function Home({
           </article>
         </div>
       </section>
-      {isAssistantCardVisible && assistantSuggestion && (
+      {isAssistantCardVisible && (
         <section aria-label="Sellince suggestion" className="px-5 pt-6">
           <div className="border-border bg-surface flex items-start gap-3 rounded-2xl border p-4">
             <span className="bg-raised text-primary grid size-11 shrink-0 place-items-center rounded-xl">
               <SellinceMark />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold">Sellince <span className="text-muted-foreground font-normal">· A suggestion for you</span></p>
+              <p className="text-sm font-bold">Sellince <span className="text-muted-foreground font-normal">· {assistantSuggestion ? "A suggestion for you" : "Chat preview"}</span></p>
               <p dir="auto" className="mt-2 text-sm leading-5">
-                {assistantSuggestion.content}
+                {assistantSuggestion ? assistantSuggestion.content : "Explore the assistant. Chat is not connected yet."}
               </p>
               <button
                 type="button"
                 onClick={() => onNavigate("chat")}
                 className="text-primary mt-2 text-xs font-bold disabled:opacity-50"
               >
-                View suggestion <span aria-hidden="true">→</span>
+                {assistantSuggestion ? "View suggestion" : "Open chat"} <span aria-hidden="true">→</span>
               </button>
             </div>
             <button

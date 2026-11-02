@@ -33,7 +33,10 @@ it("shows supplied suggestions, opens the conversation, and dismisses only the c
   }
 
   render(<Preview />);
-  expect(screen.queryByLabelText("Sellince suggestion")).toBeNull();
+  expect(screen.getByLabelText("Sellince suggestion").textContent).toContain("Chat is not connected yet.");
+  fireEvent.click(screen.getByText("Open chat"));
+  expect(screen.getByText(/Hi! I can help you find an offer/)).toBeTruthy();
+  fireEvent.click(screen.getByText("Back"));
   fireEvent.click(screen.getByText("Receive suggestion"));
   expect(screen.getByLabelText("Sellince suggestion").textContent).toContain("A useful suggestion.");
   fireEvent.click(screen.getByText("View suggestion"));

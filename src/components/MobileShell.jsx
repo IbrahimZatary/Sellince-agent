@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 const NAVIGATION = [
   { id: "home", label: "Home", Icon: House },
   { id: "line", label: "My line", Icon: Smartphone },
-  { id: "marketplace", label: "Marketplace", Icon: ShoppingBag },
-  { id: "money", label: "Orange Money", Icon: WalletCards },
+  { id: "marketplace", label: "Shop", accessibleLabel: "Marketplace", Icon: ShoppingBag },
+  { id: "money", label: "Money", accessibleLabel: "Orange Money", Icon: WalletCards },
   { id: "rewards", label: "Rewards", Icon: Gift },
 ];
 
@@ -27,7 +27,7 @@ export function MobileHeader({ onNavigate, onUnavailable, onSignOut }) {
           type="button"
           onClick={() => onNavigate("home")}
           aria-label="Go to home"
-          className="bg-primary text-primary-foreground flex size-10 items-end rounded-sm p-1 text-[10px] font-bold tracking-tight"
+          className="bg-primary text-primary-foreground flex size-10 items-end rounded-sm p-1 text-[9px] font-bold tracking-tight whitespace-nowrap"
         >
           Max it
         </button>
@@ -76,14 +76,15 @@ export function BottomNavigation({ currentScreen, onNavigate }) {
       aria-label="Main navigation"
       className="safe-bottom border-border bg-surface fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-[480px] border-t"
     >
-      <div className="grid grid-cols-5 px-1 pt-2 pb-2">
-        {NAVIGATION.map(({ id, label, Icon }) => (
+      <div className="grid grid-cols-5 items-start px-1 pt-2 pb-2">
+        {NAVIGATION.map(({ id, label, accessibleLabel, Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => onNavigate(id)}
+            aria-label={accessibleLabel || label}
             aria-current={currentScreen === id ? "page" : undefined}
-            className="text-foreground flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium"
+            className="text-foreground flex min-h-16 min-w-0 flex-col items-center gap-1 text-[10px] font-medium"
           >
             <span
               className={cn(
@@ -93,7 +94,7 @@ export function BottomNavigation({ currentScreen, onNavigate }) {
             >
               <Icon size={22} strokeWidth={2} />
             </span>
-            <span className="whitespace-nowrap">{label}</span>
+            <span className="max-w-full px-0.5 text-center leading-tight [overflow-wrap:anywhere]">{label}</span>
           </button>
         ))}
       </div>

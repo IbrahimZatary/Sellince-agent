@@ -52,7 +52,7 @@ function MobilePreview({ onExit }) {
       </div>
     );
   return (
-    <div className="bg-background text-foreground mx-auto min-h-dvh max-w-[480px] pb-28">
+    <div className="bg-background text-foreground mx-auto min-h-dvh max-w-[480px] pb-[calc(8rem+env(safe-area-inset-bottom))]">
       {currentScreen === "assistance" ? (
         <header className="safe-top">
           <button
@@ -91,7 +91,7 @@ function MobilePreview({ onExit }) {
       {isNoticeVisible && (
         <div
           role="status"
-          className="border-border bg-raised fixed right-4 bottom-24 left-4 z-20 mx-auto flex max-w-[448px] items-start gap-3 rounded-xl border p-4 text-sm shadow-lg"
+          className="border-border bg-raised fixed right-4 bottom-[calc(7rem+env(safe-area-inset-bottom))] left-4 z-20 mx-auto flex max-w-[448px] items-start gap-3 rounded-xl border p-4 text-sm shadow-lg"
         >
           <span className="flex-1">This service is not connected in the preview.</span>
           <button
