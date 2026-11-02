@@ -1,4 +1,5 @@
 import json
+import re
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -20,9 +21,15 @@ Rules:
 - wants_details: the customer asks a question or requests more information about the offer.
 - objection: the customer expresses concern, hesitation, rejection, or dissatisfaction.
 - accepts_offer: the customer clearly agrees to take or accept the offer, for example:
-  "I want the offer", "I'll take it", "I want this plan", "sounds good, I accept".
+  "I want the offer", "I'll take it", "I want this plan", "sounds good, I accept", "يلا اعتمد", "بدي اياه", "تم".
 - ready_to_pay: the customer explicitly mentions payment, checkout, paying, or proceeding to payment.
 - other: none of the above.
+
+Bilingual & Dialect Rules:
+- Support English, Modern Standard Arabic (MSA), Jordanian/Levantine Arabic slang, and Arabizi / Franco-Arab (e.g. "bdi ashtrek", "tam", "yalla").
+- Jordanian/Levantine agreement terms like "يلا", "اعتمد", "بدي اياه", "توكل على الله", "سجلني", "تم" classify as accepts_offer.
+- Arabic hesitations/inquiries like "لحظة", "استنى", "تفاصيل", "اشرحلي" classify as wants_details or objection accordingly.
+- Arabic negations like "لا", "بديش", "ما بدي", "مش مهتم", "بطلت" classify as objection.
 
 Important:
 - Agreement to take the offer is accepts_offer, NOT wants_details.
@@ -45,34 +52,70 @@ def _get_llm():
     return _LLM
 
 
-def _keyword_classify(message: str) -> dict:
-    msg_lower = message.lower()
+def _matches_any(text: str, words_set: set[str], patterns: list[str]) -> bool:
+    for p in patterns:
+        if " " in p:
+            if p in text:
+                return True
+        else:
+            if p in words_set:
+                return True
+    return False
 
-    if any(w in msg_lower for w in [
+
+def _keyword_classify(message: str) -> dict:
+    msg_lower = message.lower().strip()
+    words_set = set(re.findall(r"[\w']+", msg_lower))
+
+    # 1. Price objections take highest priority (e.g. "too expensive, can't pay")
+    price_concerns = [
+        "expensive", "too much", "pricing", "can't afford", "cant afford", "budget", "costly",
+        "غالي", "كثير غالي", "سعره مرتفع", "مكلف", "السعر عالي", "ما بقدر", "مش قادر",
+    ]
+    if _matches_any(msg_lower, words_set, price_concerns):
+        return {"intent": "objection", "objection_type": "price"}
+
+    # 2. General objections / negations / hesitations
+    negation_patterns = [
+        "no thanks", "not interested", "maybe later", "not sure", "don't want", "dont want",
+        "i'm good", "im good", "changed my mind", "hesitate", "nevermind", "nvm", "stop", "cancel",
+        "wait", "hold on",
+        "لا", "بديش", "ما بدي", "الغاء", "بطلت", "مش مهتم", "فكنا", "انسى", "مش عاجبني",
+        "لحظة", "استنى", "مش متأكد",
+    ]
+    if _matches_any(msg_lower, words_set, negation_patterns):
+        return {"intent": "objection", "objection_type": "features"}
+
+    # 3. Ready to pay
+    pay_terms = [
         "pay", "payment", "checkout", "installment", "installments", "bank transfer", "paid",
-    ]):
+        "route to checkout", "proceed to pay", "route me",
+        "دفع", "ادفع", "رابط الدفع", "ابعثلي الرابط", "بدي ادفع",
+    ]
+    if _matches_any(msg_lower, words_set, pay_terms):
         return {"intent": "ready_to_pay", "objection_type": "none"}
 
-    if any(w in msg_lower for w in [
+    # 4. Accepts offer (Jordanian slang, Arabizi, English)
+    accept_terms = [
         "i'll take", "i will take", "take it", "i want the offer", "i want this plan",
         "want the offer", "sign me up", "sounds good", "i accept", "accept the offer",
-        "let's do it", "lets do it", "go ahead", "i want it",
-    ]):
+        "let's do it", "lets do it", "go ahead", "i want it", "i want", "okay i want",
+        "ok i want", "deal", "buy", "buy it", "purchase", "ashtrek",
+        "تم", "يلا", "موافق", "اشترك", "بدي اياه", "توكل على الله", "اعتمد", "خلص تم",
+        "سجلني", "بدي اشترك", "موافق على العرض", "تمام اعتمد",
+    ]
+    if _matches_any(msg_lower, words_set, accept_terms):
         return {"intent": "accepts_offer", "objection_type": "none"}
 
-    price_concerns = ["expensive", "too much", "pricing", "can't afford", "cant afford", "budget"]
-    if any(w in msg_lower for w in price_concerns + [
-        "no thanks", "not interested", "maybe later", "not sure", "don't want", "dont want",
-        "i'm good", "im good", "changed my mind", "hesitate", "hold on", "wait",
-    ]):
-        objection_type = "price" if any(w in msg_lower for w in price_concerns) else "features"
-        return {"intent": "objection", "objection_type": objection_type}
-
-    if any(w in msg_lower for w in [
+    # 5. Wants details / questions
+    detail_terms = [
         "more data", "details", "tell me", "explain", "features", "how much", "is it faster",
         "speed", "slow", "offer", "plan details", "difference", "compare", "more info",
-        "does the plan", "what are my options", "upgrade",
-    ]):
+        "does the plan", "what are my options", "upgrade", "why", "how",
+        "تفاصيل", "اشرحلي اكثر", "اشرحلي", "شو التفاصيل", "كم السعر", "ايش العرض", "بدي تفاصيل", "معلومات",
+        "ليش", "كيف", "شو في عروض",
+    ]
+    if _matches_any(msg_lower, words_set, detail_terms) or "?" in message or "؟" in message:
         return {"intent": "wants_details", "objection_type": "none"}
 
     return {"intent": "other", "objection_type": "none"}

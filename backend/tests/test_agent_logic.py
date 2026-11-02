@@ -1,5 +1,6 @@
 from app.agent.recommend import recommend_node
 from app.agent.respond import respond_node
+from app.agent.understand import _keyword_classify
 
 
 def test_recommend_upgrade_for_high_usage():
@@ -39,3 +40,31 @@ def test_respond_node_structure():
     assert "response" in result
     assert isinstance(result["response"], str)
     assert len(result["response"]) > 0
+
+
+def test_bilingual_keyword_classification():
+    """Test bilingual and dialect classification (Arabic, Jordanian slang, Arabizi)."""
+    # Jordanian slang acceptance
+    res1 = _keyword_classify("يلا اعتمد بدي اشترك بالفايبر")
+    assert res1["intent"] == "accepts_offer"
+
+    # Arabizi acceptance
+    res2 = _keyword_classify("bdi ashtrek bl offer")
+    assert res2["intent"] == "accepts_offer"
+
+    # Arabic price objection
+    res3 = _keyword_classify("السعر كثير غالي ما بقدر ادفع")
+    assert res3["intent"] == "objection"
+    assert res3["objection_type"] == "price"
+
+    # Arabic negation / disinterest
+    res4 = _keyword_classify("بديش مش مهتم شكرا")
+    assert res4["intent"] == "objection"
+
+    # Arabic inquiry for details
+    res5 = _keyword_classify("ممكن تفاصيل اكثر عن العرض وسرعة النت؟")
+    assert res5["intent"] == "wants_details"
+
+    # Arabic ready to pay
+    res6 = _keyword_classify("ابعثلي رابط الدفع بدي ادفع هسا")
+    assert res6["intent"] == "ready_to_pay"
