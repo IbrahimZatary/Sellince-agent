@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.local
+.env
+.env.*
+!.env.example
+*.log
+coverage/
+.playwright-cli/
+playwright-report/
+test-results/
+artifacts/
+.DS_Store
+Thumbs.db

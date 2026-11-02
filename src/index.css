@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@theme inline {
+  --font-sans: "Geist Variable", sans-serif;
+  --color-background: #000000;
+  --color-surface: #202020;
+  --color-raised: #303030;
+  --color-foreground: #ffffff;
+  --color-muted-foreground: #bdbdbd;
+  --color-border: #464646;
+  --color-primary: #ff7f00;
+  --color-primary-foreground: #000000;
+  --color-auth-link: #739be9;
+  --color-chat: #f2f3f6;
+  --color-lilac: #a985d6;
+  --color-mint: #51bf8a;
+  --color-yellow: #ffcc00;
+}
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background: #111;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 3px solid #ff7f00;
+    outline-offset: 3px;
+  }
+}
+@layer utilities {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  .auth-input {
+    @apply border-foreground bg-background text-foreground placeholder:text-foreground focus-visible:outline-primary h-14 w-full rounded border px-5 text-base;
+  }
+}
