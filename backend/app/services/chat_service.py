@@ -2,6 +2,7 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy.orm import Session
 
 from app.agent.runner import run_agent_turn
+from app.core.cache import cache
 from app.core.exceptions import AppException
 from app.models.attribution import Attribution
 from app.models.customer import Customer
@@ -184,6 +185,9 @@ def handle_chat_turn(db: Session, req: ChatRequest) -> ChatResponse:
             action = "chat"
 
     db.commit()
+
+    # Invalidate dashboard cache so new conversations and messages show up immediately
+    cache.invalidate(f"dashboard:summary:{customer.company_id}")
 
     return ChatResponse(
         response=result["response"],

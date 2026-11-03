@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.cache import cache
 from app.models.attribution import Attribution
 from app.models.conversation import Conversation
 from app.models.customer import Customer
@@ -48,6 +49,11 @@ def _pct(part: int, total: int) -> int:
 
 
 def get_dashboard_summary(db: Session, company_id: int) -> DashboardSummary:
+    cache_key = f"dashboard:summary:{company_id}"
+    cached_summary = cache.get(cache_key)
+    if cached_summary is not None:
+        return cached_summary
+
     conversations = (
         db.query(Conversation)
         .filter(Conversation.company_id == company_id)
@@ -240,7 +246,7 @@ def get_dashboard_summary(db: Session, company_id: int) -> DashboardSummary:
         for message, conversation, customer in recent
     ]
 
-    return DashboardSummary(
+    summary = DashboardSummary(
         overviewMetrics=overview_metrics,
         revenueTrend=revenue_trend,
         conversionFunnel=[
@@ -253,3 +259,5 @@ def get_dashboard_summary(db: Session, company_id: int) -> DashboardSummary:
         agentAutonomy=agent_autonomy,
         recentActivity=recent_activity,
     )
+    cache.set(cache_key, summary, ttl=60.0)
+    return summary

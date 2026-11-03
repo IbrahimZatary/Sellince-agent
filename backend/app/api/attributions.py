@@ -18,6 +18,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
+from app.core.cache import cache
 from app.core.database import get_db
 from app.models.attribution import Attribution
 from app.models.conversation import Conversation
@@ -119,6 +120,7 @@ def update_attribution(
             row.confirmed_at = datetime.utcnow()
         db.commit()
         db.refresh(row)
+        cache.invalidate(f"dashboard:summary:{current_user.company_id}")
     elif row.status != "pending":
         # idempotent: already moved → just return the stored state unchanged
         pass
@@ -162,6 +164,7 @@ def complete_checkout(
     customer.usage_percentage = 0
     db.commit()
     db.refresh(row)
+    cache.invalidate(f"dashboard:summary:{customer.company_id}")
     return _attribution_read(row)
 @router.get("", response_model=list[AttributionRead])
 def list_attributions(

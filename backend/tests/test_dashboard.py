@@ -120,3 +120,24 @@ def test_dashboard_summary_shape_and_counts(client, db_session):
     assert body["recentActivity"][0]["customer"] == "Dana"
     assert body["recentActivity"][0]["status"] == "confirmed"
     assert body["recentActivity"][0]["action"] == "50GB Mobile 5G"
+
+
+def test_dashboard_summary_uses_cache(client, db_session):
+    from app.core.cache import cache
+
+    headers = _seed_dashboard(db_session)
+
+    # First call primes the cache
+    resp1 = client.get("/api/v1/dashboard/summary", headers=headers)
+    assert resp1.status_code == 200
+
+    # Ensure cache has entry
+    company_id = db_session.query(Company).first().id
+    cached_val = cache.get(f"dashboard:summary:{company_id}")
+    assert cached_val is not None
+    assert cached_val.conversionFunnel[0].stage == "Engaged"
+
+    # Second call returns identical cached summary
+    resp2 = client.get("/api/v1/dashboard/summary", headers=headers)
+    assert resp2.status_code == 200
+    assert resp2.json()["overviewMetrics"] == resp1.json()["overviewMetrics"]

@@ -129,10 +129,13 @@ def _clean_database(test_engine):
 
         log_duration(f"Database cleanup ({stage})", start)
 
+    from app.core.cache import cache
+    cache.clear()
     clean_database("before test")
 
     yield
 
+    cache.clear()
     clean_database("after test")
 
 
