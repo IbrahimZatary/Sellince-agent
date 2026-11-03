@@ -11,9 +11,9 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(BIGINT_ID, primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(BIGINT_ID, ForeignKey("companies.id"))
+    company_id: Mapped[int] = mapped_column(BIGINT_ID, ForeignKey("companies.id"), index=True)
     name: Mapped[str] = mapped_column(String(150))
-    phone: Mapped[str] = mapped_column(String(30))
+    phone: Mapped[str] = mapped_column(String(30), index=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     service_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
     current_plan: Mapped[str] = mapped_column(String(100))

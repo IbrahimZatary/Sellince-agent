@@ -23,10 +23,10 @@ class Attribution(Base):
 
     id: Mapped[int] = mapped_column(BIGINT_ID, primary_key=True, autoincrement=True)
     conversation_id: Mapped[int] = mapped_column(
-        BIGINT_ID, ForeignKey("conversations.id"), nullable=False
+        BIGINT_ID, ForeignKey("conversations.id"), nullable=False, index=True
     )
     customer_id: Mapped[int] = mapped_column(
-        BIGINT_ID, ForeignKey("customers.id"), nullable=False
+        BIGINT_ID, ForeignKey("customers.id"), nullable=False, index=True
     )
     # Product is a plain catalog id (no products table) — model owns just a name.
     product_id: Mapped[str] = mapped_column(String(50), nullable=False)
