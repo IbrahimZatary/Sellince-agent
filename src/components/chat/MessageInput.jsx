@@ -1,4 +1,4 @@
-import { Send } from "lucide-react";
+import { CirclePlus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MessageInput({
@@ -28,10 +28,13 @@ export default function MessageInput({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          onMessageSubmit();
+          if (isChatReady && !isSendingMessage && messageDraft.trim()) onMessageSubmit();
         }}
         className="flex items-end gap-3 pb-4"
       >
+        <button type="button" disabled aria-label="Attachments unavailable" className="grid size-11 shrink-0 place-items-center text-neutral-400">
+          <CirclePlus size={24} />
+        </button>
         <label className="sr-only" htmlFor="message">
           Message
         </label>
@@ -42,7 +45,7 @@ export default function MessageInput({
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={handleKeyDown}
           disabled={!isChatReady}
-          placeholder="Write a message..."
+          placeholder="Send a message..."
           className="text-background max-h-28 min-h-12 min-w-0 flex-1 resize-y rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-base leading-6 placeholder:text-neutral-500 disabled:opacity-60"
         />
         <Button

@@ -1,31 +1,36 @@
 import {
-  CircleHelp,
   ChevronRight,
-  Gift,
   Globe2,
-  Headphones,
-  LifeBuoy,
-  MessageCircle,
-  ReceiptText,
   ShoppingBag,
   Smartphone,
   Sparkles,
-  Store,
   WalletCards,
-  Wifi,
 } from "lucide-react";
 import { ActionTile, SectionTitle } from "@/components/ServiceParts";
+import billIcon from "@/assets/maxit/quick-bill.png";
+import topupIcon from "@/assets/maxit/quick-topup.png";
+import safeIcon from "@/assets/maxit/quick-safe.png";
+import wheelImage from "@/assets/maxit/reward-wheel.png";
+import pointsImage from "@/assets/maxit/reward-points.png";
+import dealsImage from "@/assets/maxit/reward-deals.png";
+import chatIcon from "@/assets/maxit/assist-chat.png";
+import helpIcon from "@/assets/maxit/assist-help.png";
+import faqIcon from "@/assets/maxit/assist-faq.png";
+import serviceIcon from "@/assets/maxit/assist-service.png";
+import shopsIcon from "@/assets/maxit/assist-shops.png";
+import fiberCampaign from "@/assets/maxit/fiber-campaign.jpg";
+import orangeLogo from "@/assets/maxit/orange-logo.png";
 
 export function MyLine({ onUnavailable }) {
   const actions = [
-    { label: "Bills & payments", Icon: ReceiptText },
-    { label: "Recharge line", Icon: Smartphone },
-    { label: "Internet", Icon: Wifi },
-    { label: "More services", Icon: Sparkles },
+    { label: "Bills & Orange Taqseet", imageSrc: billIcon },
+    { label: "Recharge Line", imageSrc: topupIcon },
+    { label: "Safe Internet", imageSrc: safeIcon },
+    { label: "OSN", Icon: Sparkles },
   ];
   return (
     <main className="px-5 pt-6">
-      <h1 className="text-3xl font-bold tracking-tight">My line</h1>
+      <h1 className="text-2xl font-bold tracking-tight">My line</h1>
       <div className="mt-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="bg-raised grid size-12 place-items-center rounded-xl">
@@ -49,7 +54,7 @@ export function MyLine({ onUnavailable }) {
       </div>
       <section className="mt-8">
         <SectionTitle action="See all" onAction={onUnavailable}>
-          Main services
+          Main Services
         </SectionTitle>
         <div className="grid grid-cols-4 gap-3">
           {actions.map((action) => (
@@ -59,7 +64,7 @@ export function MyLine({ onUnavailable }) {
       </section>
       <div className="bg-lilac text-primary-foreground mt-8 rounded-2xl p-5">
         <p className="font-bold">Your opinion matters!</p>
-        <p className="mt-1 text-sm leading-5">Tell us how we can make your experience better.</p>
+        <p className="mt-1 text-sm leading-5">Please take one minute from your time to answer this short survey to improve the services and meet your expectations.</p>
       </div>
       <section className="mt-8">
         <SectionTitle>Remaining balance</SectionTitle>
@@ -74,7 +79,7 @@ export function MyLine({ onUnavailable }) {
 export function Marketplace({ onUnavailable }) {
   return (
     <main className="pt-6">
-      <h1 className="px-5 text-3xl font-bold tracking-tight">Marketplace</h1>
+      <h1 className="px-5 text-2xl font-bold tracking-tight">Marketplace</h1>
       <div className="hide-scrollbar mt-6 flex gap-2 overflow-x-auto px-5 pb-1">
         <span className="bg-foreground text-background shrink-0 rounded-full px-5 py-2 text-sm font-semibold">
           Discover
@@ -105,22 +110,20 @@ export function Marketplace({ onUnavailable }) {
         </p>
       </div>
       <section className="bg-surface px-5 py-7">
-        <SectionTitle>Special offers</SectionTitle>
+        <SectionTitle>Special Offers</SectionTitle>
         <div className="hide-scrollbar flex gap-3 overflow-x-auto">
-          <article className="border-border bg-background w-[80%] shrink-0 overflow-hidden rounded-2xl border">
-            <div className="bg-primary text-primary-foreground flex h-36 items-end p-5">
-              <div>
-                <p className="text-[10px] font-bold tracking-widest">STAY CONNECTED</p>
-                <p className="mt-2 text-2xl leading-tight font-extrabold">
-                  More speed.
-                  <br />
-                  More possibilities.
-                </p>
+          <article className="border-border bg-surface w-[75%] shrink-0 overflow-hidden rounded-xl border">
+            <div className="bg-background flex h-40 overflow-hidden">
+              <img src={fiberCampaign} alt="" className="h-full w-[42%] object-cover object-right" />
+              <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-3">
+                <img src={orangeLogo} alt="" className="size-6 object-contain" />
+                <p className="text-primary text-xs leading-tight font-bold">Spending time at home just got better</p>
+                <p className="text-[10px] leading-tight font-medium">Discover Orange Fiber offers for your home.</p>
               </div>
             </div>
-            <div className="p-4">
-              <p className="font-bold">Discover fiber</p>
-              <p className="text-muted-foreground mt-1 text-xs">Orange offers · Demo</p>
+            <div className="flex items-center gap-3 p-4">
+              <span className="bg-primary grid size-10 shrink-0 place-items-center rounded-lg"><img src={safeIcon} alt="" className="size-7 object-contain" /></span>
+              <span><span className="block text-sm font-semibold">Fiber offers</span><span className="mt-1 block text-xs">Orange Offers</span></span>
             </div>
           </article>
           <article className="border-border bg-background w-[65%] shrink-0 overflow-hidden rounded-2xl border">
@@ -135,7 +138,7 @@ export function Marketplace({ onUnavailable }) {
         </div>
       </section>
       <section className="px-5 py-7">
-        <SectionTitle>Mobile subscriptions</SectionTitle>
+        <SectionTitle>Mobile Subscriptions Content</SectionTitle>
         <div className="bg-raised flex items-center gap-4 rounded-2xl p-5">
           <Globe2 size={26} className="text-primary" />
           <div>
@@ -153,65 +156,36 @@ export function Marketplace({ onUnavailable }) {
 export function Rewards({ onUnavailable }) {
   return (
     <main className="px-5 pt-6">
-      <h1 className="text-3xl font-bold tracking-tight">Rewards</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Rewards</h1>
       <section className="mt-8">
-        <SectionTitle>Wheel of Fortune</SectionTitle>
+        <SectionTitle>Wheel Of Fortune 🎡</SectionTitle>
         <button
           type="button"
           onClick={onUnavailable}
-          className="bg-raised flex min-h-36 w-full items-center gap-5 overflow-hidden rounded-2xl p-5 text-left"
+          className="w-full overflow-hidden rounded-2xl text-left"
         >
-          <span className="border-primary bg-yellow text-primary-foreground grid size-24 shrink-0 place-items-center rounded-full border-[10px]">
-            <Gift size={35} />
-          </span>
-          <span className="flex-1">
-            <span className="block text-xl leading-tight font-bold">
-              Wheel of
-              <br />
-              Fortune
-            </span>
-            <span className="text-muted-foreground mt-2 block text-xs">
-              Discover a little surprise
-            </span>
-          </span>
-          <ChevronRight />
+          <img src={wheelImage} alt="Wheel of Fortune" className="block w-full" />
         </button>
       </section>
       <section className="border-border mt-8 border-t pt-7">
         <h2 className="text-xl font-bold">Orange Loyalty</h2>
-        <p className="text-muted-foreground mt-2 text-sm leading-5">
-          Turn your everyday moments into rewards and discover exclusive deals.
+        <p className="mt-2 text-sm leading-5">
+          Turn your spending into rewards with Max it Rewards and discover Orange partner deals.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={onUnavailable}
-            className="bg-lilac text-primary-foreground flex min-h-52 flex-col justify-between rounded-2xl p-4 text-left"
+            className="overflow-hidden rounded-2xl text-left"
           >
-            <Gift size={38} />
-            <span>
-              <span className="block text-xl font-extrabold">
-                Max it
-                <br />
-                Rewards
-              </span>
-              <span className="mt-2 block text-xs font-medium">More reasons to smile</span>
-            </span>
+            <img src={pointsImage} alt="Max it Rewards" className="block w-full" />
           </button>
           <button
             type="button"
             onClick={onUnavailable}
-            className="bg-mint text-primary-foreground flex min-h-52 flex-col justify-between rounded-2xl p-4 text-left"
+            className="overflow-hidden rounded-2xl text-left"
           >
-            <Sparkles size={38} />
-            <span>
-              <span className="block text-xl font-extrabold">
-                Orange
-                <br />
-                Deals
-              </span>
-              <span className="mt-2 block text-xs font-medium">Discover everyday offers</span>
-            </span>
+            <img src={dealsImage} alt="Orange Deals" className="block w-full" />
           </button>
         </div>
       </section>
@@ -221,24 +195,24 @@ export function Rewards({ onUnavailable }) {
 
 export function Assistance({ onNavigate, onUnavailable }) {
   const options = [
-    { label: "Chat", Icon: MessageCircle, action: () => onNavigate("chat") },
-    { label: "Report & track issues", Icon: CircleHelp, action: onUnavailable },
-    { label: "FAQ", Icon: LifeBuoy, action: onUnavailable },
-    { label: "Customer service", Icon: Headphones, action: onUnavailable },
-    { label: "Orange Shops", Icon: Store, action: onUnavailable },
+    { label: "Chat", icon: chatIcon, action: () => onNavigate("chat") },
+    { label: "Report & track issues", icon: helpIcon, action: onUnavailable },
+    { label: "FAQ", icon: faqIcon, action: onUnavailable },
+    { label: "Customer service", icon: serviceIcon, action: onUnavailable },
+    { label: "Orange Shops", icon: shopsIcon, action: onUnavailable },
   ];
   return (
     <main className="px-5 pt-6">
-      <h1 className="text-3xl font-bold tracking-tight">Assistance</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Assistance</h1>
       <div className="mt-8 flex flex-col gap-3">
-        {options.map(({ label, Icon, action }) => (
+        {options.map(({ label, icon, action }) => (
           <button
             key={label}
             type="button"
             onClick={action}
             className="border-border bg-surface flex min-h-20 items-center gap-5 rounded-2xl border px-5 text-left"
           >
-            <Icon size={24} className="text-primary" />
+            <img src={icon} alt="" className="size-7 shrink-0 object-contain" />
             <span className="flex-1 text-base font-semibold">{label}</span>
             <ChevronRight size={20} />
           </button>

@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 
-export function SectionTitle({ children, action, onAction }) {
+export function SectionTitle({ children, action, onAction, ActionIcon = ChevronRight }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-4">
       <h2 className="text-xl font-bold tracking-tight">{children}</h2>
@@ -11,24 +11,25 @@ export function SectionTitle({ children, action, onAction }) {
           className="flex items-center gap-1 text-xs font-semibold"
         >
           {action}
-          <ChevronRight size={16} />
+          <ActionIcon size={16} />
         </button>
       )}
     </div>
   );
 }
 
-export function ActionTile({ Icon, label, onClick }) {
+export function ActionTile({ Icon, imageSrc, label, badge, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex min-w-0 flex-col items-center gap-2 text-center text-xs leading-4 font-medium"
+      className="flex min-w-0 flex-col items-center gap-2 text-center text-[10px] leading-tight font-medium"
     >
-      <span className="bg-raised text-primary grid aspect-square w-full max-w-20 place-items-center rounded-2xl">
-        <Icon size={28} strokeWidth={1.8} />
+      <span className="bg-raised text-primary relative grid aspect-square w-full max-w-20 place-items-center rounded-2xl">
+        {imageSrc ? <img src={imageSrc} alt="" className="size-10 object-contain" /> : <Icon size={28} strokeWidth={1.8} />}
+        {badge && <span className="bg-mint absolute right-2 bottom-1 left-2 rounded-sm text-center text-[9px] leading-3 font-bold text-white">{badge}</span>}
       </span>
-      <span>{label}</span>
+      <span className="line-clamp-2">{label}</span>
     </button>
   );
 }

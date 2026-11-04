@@ -80,6 +80,21 @@ describe("useChat", () => {
     expect(result.current.messageSendError).toBe("");
   });
 
+  it("keeps draft edits made while a reply is pending", async () => {
+    let resolveReply;
+    const onMessageSend = () => new Promise((resolve) => { resolveReply = resolve; });
+    const { result } = renderHook(() => useChat({ onMessageSend }));
+    act(() => result.current.handleDraftChange("Hello"));
+    let request;
+    act(() => { request = result.current.handleMessageSubmit(); });
+    act(() => result.current.handleDraftChange("Hello "));
+    await act(async () => {
+      resolveReply({ content: "Hi" });
+      await request;
+    });
+    expect(result.current.messageDraft).toBe("Hello ");
+  });
+
   it("does not display a malformed assistant response", async () => {
     const { result } = renderHook(() => useChat({ onMessageSend: async () => ({ content: " " }) }));
     act(() => result.current.handleDraftChange("Hello"));

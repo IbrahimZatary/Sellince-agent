@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, X } from "lucide-react";
 import { MobileHeader, BottomNavigation } from "@/components/MobileShell";
-import { DemoBanner } from "@/components/ServiceParts";
 import useChat from "@/hooks/useChat";
 import Chat from "@/pages/Chat";
 import Login from "@/pages/Login";
@@ -71,7 +70,6 @@ function MobilePreview({ onExit }) {
           onSignOut={onExit}
         />
       )}
-      <DemoBanner />
       {currentScreen === "home" && (
         <Home
           assistantSuggestion={chat.proactiveMessage}

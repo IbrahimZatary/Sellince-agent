@@ -7,12 +7,12 @@ import {
   EyeOff,
   Globe2,
   LockKeyhole,
-  MessageSquare,
-  ShoppingBag,
-  Smartphone,
 } from "lucide-react";
-import welcomeArt from "@/assets/auth-welcome.png";
-import signInArt from "@/assets/auth-sign-in.png";
+import welcomeArt from "@/assets/maxit/auth-welcome.png";
+import signInArt from "@/assets/maxit/auth-signin.png";
+import signInIcon from "@/assets/maxit/auth-other.png";
+import guestIcon from "@/assets/maxit/auth-guest.png";
+import maxitLogo from "@/assets/maxit/maxit-logo.png";
 
 function BackButton({ onBack }) {
   return (
@@ -68,10 +68,10 @@ function AuthWelcome({ onSignIn, onPreview }) {
           <Globe2 size={19} className="text-primary" /> English <ChevronDown size={18} />
         </button>
       </div>
-      <img src={welcomeArt} alt="" className="mx-auto mt-5 h-44 w-full object-contain" />
+      <img src={welcomeArt} alt="" className="mx-auto mt-6 w-full max-w-[300px] object-contain" />
       <div className="mt-8 text-center">
-        <h1 className="text-xl font-bold">Welcome to Max it</h1>
-        <p className="mx-auto mt-3 max-w-80 text-sm leading-5">
+        <h1 className="text-base font-bold">Welcome to Max it</h1>
+        <p className="mx-auto mt-3 max-w-80 text-xs leading-5">
           If you have an Orange mobile line you can login using these two methods
         </p>
       </div>
@@ -79,23 +79,31 @@ function AuthWelcome({ onSignIn, onPreview }) {
         <button
           type="button"
           disabled
-          className="border-border bg-surface flex min-h-36 flex-col items-start justify-between rounded-xl border p-4 text-left opacity-80"
+          className="border-border bg-surface flex min-h-36 flex-col items-start justify-between rounded-xl border p-4 text-left"
         >
-          <Smartphone className="text-primary" size={26} />
+          <span className="relative grid size-9 place-items-center rounded-full bg-primary">
+            <img src={maxitLogo} alt="" className="size-7 rounded-full object-contain" />
+            <LockKeyhole size={14} className="absolute -right-1 -bottom-1 rounded-full bg-white p-0.5 text-black" />
+          </span>
           <span>
-            <span className="block text-xs">SIM Card</span>
-            <span className="mt-1 block text-sm font-semibold">Mobile Data</span>
+            <span className="mb-2 block h-px w-12 bg-border" />
+            <span className="block text-[11px]">SIM Card</span>
+            <span className="mt-1 block text-xs font-semibold">Mobile Data</span>
           </span>
         </button>
         <button
           type="button"
           disabled
-          className="border-border bg-surface flex min-h-36 flex-col items-start justify-between rounded-xl border p-4 text-left opacity-80"
+          className="border-border bg-surface flex min-h-36 flex-col items-start justify-between rounded-xl border p-4 text-left"
         >
-          <MessageSquare className="text-primary" size={26} />
+          <span className="relative grid size-9 place-items-center rounded-lg bg-primary text-[10px] font-bold text-white">
+            SMS
+            <LockKeyhole size={14} className="absolute -right-1 -bottom-1 rounded-full bg-white p-0.5 text-black" />
+          </span>
           <span>
-            <span className="block text-xs">Mobile connect</span>
-            <span className="mt-1 block text-sm font-semibold">SMS</span>
+            <span className="mb-2 block h-px w-12 bg-border" />
+            <span className="block text-[11px]">Mobile connect</span>
+            <span className="mt-1 block text-xs font-semibold">SMS</span>
           </span>
         </button>
       </div>
@@ -109,10 +117,10 @@ function AuthWelcome({ onSignIn, onPreview }) {
         onClick={onSignIn}
         className="border-border bg-surface flex min-h-24 w-full items-center gap-4 rounded-xl border px-5 text-left"
       >
-        <LockKeyhole className="text-primary shrink-0" size={30} />
+        <img src={signInIcon} alt="" className="size-10 shrink-0 object-contain" />
         <span className="flex-1">
-          <span className="block text-base font-semibold">Sign in/ Sign up</span>
-          <span className="mt-1 block text-xs leading-5">Using your email or mobile number</span>
+          <span className="block text-sm font-semibold">Sign in/ Sign up</span>
+          <span className="mt-1 block text-[11px] leading-4">Using your email or mobile number</span>
         </span>
         <ChevronRight size={22} />
       </button>
@@ -121,10 +129,10 @@ function AuthWelcome({ onSignIn, onPreview }) {
         onClick={onPreview}
         className="border-border bg-surface mt-4 flex min-h-24 w-full items-center gap-4 rounded-xl border px-5 text-left"
       >
-        <ShoppingBag className="text-primary shrink-0" size={30} />
+        <img src={guestIcon} alt="" className="size-10 shrink-0 object-contain" />
         <span className="flex-1">
-          <span className="block text-base font-semibold">Continue as a guest</span>
-          <span className="mt-1 block text-xs leading-5">Explore the UI without signing in</span>
+          <span className="block text-sm font-semibold">Continue as a guest</span>
+          <span className="mt-1 block text-[11px] leading-4">Explore Max it as a guest</span>
         </span>
         <ChevronRight size={22} />
       </button>
@@ -220,18 +228,18 @@ export default function Login({ onPreview }) {
         <BackButton onBack={() => handleLeaveSignIn("welcome")} />
       </div>
       <img src={signInArt} alt="" className="bg-surface mt-4 h-32 w-full object-contain" />
-      <h1 className="mt-7 text-center text-xl font-bold">Sign in with your account</h1>
+      <h1 className="mt-7 text-center text-base font-bold">Sign in with your account</h1>
       <form onSubmit={handleLoginSubmit} className="mt-12">
         <label className="sr-only" htmlFor="phone">
-          Mobile number
+          Email or mobile number
         </label>
         <input
           id="phone"
-          type="tel"
-          autoComplete="tel"
+          type="text"
+          autoComplete="username"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
-          placeholder="Mobile number *"
+          placeholder="Email or mobile number *"
           className="auth-input"
         />
         <div className="mt-4">

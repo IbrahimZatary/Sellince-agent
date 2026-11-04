@@ -1,7 +1,6 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
 @theme inline {
-  --font-sans: "Geist Variable", sans-serif;
+  --font-sans: Roboto, Arial, sans-serif;
   --color-background: #000000;
   --color-surface: #202020;
   --color-raised: #303030;
@@ -40,6 +39,9 @@
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
+  .native-android .safe-top {
+    padding-top: max(env(safe-area-inset-top), 24px);
+  }
   .safe-bottom {
     padding-bottom: max(env(safe-area-inset-bottom), 12px);
   }
@@ -48,6 +50,12 @@
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+  .maxit-icon {
+    filter: brightness(0) invert(1);
+  }
+  .maxit-icon-selected {
+    filter: brightness(0) saturate(100%) invert(53%) sepia(96%) saturate(2400%) hue-rotate(1deg) brightness(104%);
   }
 }
 

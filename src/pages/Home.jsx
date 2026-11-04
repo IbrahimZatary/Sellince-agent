@@ -1,22 +1,25 @@
 import {
   ArrowRight,
-  CircleDollarSign,
   Gift,
-  Globe2,
-  Play,
+  Pencil,
   Smartphone,
-  Sparkles,
-  WalletCards,
+  Truck,
   X,
 } from "lucide-react";
 import { ActionTile, SectionTitle } from "@/components/ServiceParts";
 import SellinceMark from "@/components/chat/SellinceMark";
+import topupIcon from "@/assets/maxit/quick-topup.png";
+import lineIcon from "@/assets/maxit/quick-line.png";
+import extraIcon from "@/assets/maxit/quick-extra.png";
+import moneyIcon from "@/assets/maxit/quick-money.png";
+import orangeLogo from "@/assets/maxit/orange-logo.png";
+import scholarshipsCampaign from "@/assets/maxit/scholarships-campaign.jpg";
 
 const QUICK_ACTIONS = [
-  { label: "Recharge line", Icon: CircleDollarSign },
-  { label: "Buy mobile line", Icon: Smartphone },
-  { label: "Orange Extra", Icon: Play },
-  { label: "Money transfer", Icon: WalletCards },
+  { label: "Recharge Line", imageSrc: topupIcon },
+  { label: "Buy Mobile Line", imageSrc: lineIcon, badge: "Offer" },
+  { label: "Orange Extra", imageSrc: extraIcon },
+  { label: "Orange Money Transfer", imageSrc: moneyIcon },
 ];
 
 export default function Home({
@@ -29,37 +32,33 @@ export default function Home({
   return (
     <main>
       <section className="bg-surface px-5 pt-6 pb-7">
-        <p className="text-muted-foreground text-xs font-medium">YOUR SPACE, ALL IN ONE PLACE</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Welcome to Max it</h1>
-        <p className="text-muted-foreground mt-1 text-xs">Your everyday essentials, together.</p>
+        <h1 className="text-xl font-semibold">Welcome to Max it</h1>
         <div className="hide-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1">
-          <article className="bg-raised min-w-[46%] flex-1 rounded-2xl p-4">
-            <Smartphone className="text-primary" size={22} />
-            <p className="mt-4 text-sm font-semibold">My line balance</p>
-            <p className="mt-2 text-lg font-bold">
+          <article className="bg-raised min-w-[46%] flex-1 rounded-2xl px-3 py-4">
+            <div className="flex min-h-8 items-center gap-2"><Smartphone className="text-primary" size={20} /><span className="text-muted-foreground text-[10px]">Mobile line</span></div>
+            <div className="mt-3 flex items-center gap-2"><p className="text-muted-foreground shrink-0 text-[10px] font-medium">My line balance</p><span className="bg-primary h-px min-w-0 flex-1" /></div>
+            <p className="mt-2 text-base font-bold">
               — <span className="text-xs font-normal">JOD</span>
             </p>
-            <p className="text-muted-foreground mt-1 text-[10px]">Demo account</p>
           </article>
-          <article className="bg-raised min-w-[46%] flex-1 rounded-2xl p-4">
-            <WalletCards className="text-primary" size={22} />
-            <p className="mt-4 text-sm font-semibold">My wallet</p>
-            <p className="mt-2 text-lg font-bold">
+          <article className="bg-raised min-w-[46%] flex-1 rounded-2xl px-3 py-4">
+            <div className="flex min-h-8 items-center gap-2"><img src={moneyIcon} alt="" className="size-7 object-contain" /><span className="text-[10px] leading-3 font-bold">Orange<br />Money</span></div>
+            <div className="mt-3 flex items-center gap-2"><p className="text-muted-foreground shrink-0 text-[10px] font-medium">My Wallet</p><span className="bg-primary h-px min-w-0 flex-1" /></div>
+            <p className="mt-2 text-base font-bold">
               — <span className="text-xs font-normal">JOD</span>
             </p>
-            <p className="text-muted-foreground mt-1 text-[10px]">Not connected</p>
           </article>
         </div>
       </section>
       {isAssistantCardVisible && (
         <section aria-label="Sellince suggestion" className="px-5 pt-6">
-          <div className="border-border bg-surface flex items-start gap-3 rounded-2xl border p-4">
-            <span className="bg-raised text-primary grid size-11 shrink-0 place-items-center rounded-xl">
+          <div className="border-border bg-surface flex items-start gap-3 rounded-2xl border p-3">
+            <span className="bg-raised text-primary grid size-10 shrink-0 place-items-center rounded-xl">
               <SellinceMark />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold">Sellince <span className="text-muted-foreground font-normal">· {assistantSuggestion ? "A suggestion for you" : "Chat preview"}</span></p>
-              <p dir="auto" className="mt-2 text-sm leading-5">
+              <p className="text-xs font-bold">Sellince <span className="text-muted-foreground font-normal">· {assistantSuggestion ? "A suggestion for you" : "Chat preview"}</span></p>
+              <p dir="auto" className="mt-1 text-xs leading-5">
                 {assistantSuggestion ? assistantSuggestion.content : "Explore the assistant. Chat is not connected yet."}
               </p>
               <button
@@ -82,7 +81,7 @@ export default function Home({
         </section>
       )}
       <section className="px-5 py-7">
-        <SectionTitle action="Customize" onAction={onUnavailable}>
+        <SectionTitle action="Customize" onAction={onUnavailable} ActionIcon={Pencil}>
           Quick actions
         </SectionTitle>
         <div className="grid grid-cols-4 gap-3">
@@ -92,26 +91,20 @@ export default function Home({
         </div>
       </section>
       <section className="px-5 pb-7">
-        <SectionTitle action="Track order" onAction={onUnavailable}>
-          Buy now
+        <SectionTitle action="Track Order" onAction={onUnavailable} ActionIcon={Truck}>
+          Buy Now
         </SectionTitle>
         <button
           type="button"
           onClick={() => onNavigate("marketplace")}
-          className="bg-primary text-primary-foreground flex min-h-24 w-full items-center justify-between gap-3 overflow-hidden rounded-2xl px-5 text-left"
+          className="bg-raised flex min-h-20 w-full items-stretch overflow-hidden rounded-xl text-left"
         >
-          <span>
-            <span className="block text-lg leading-tight font-extrabold">
-              Mobile, fiber,
-              <br />
-              devices & more.
-            </span>
-            <span className="mt-1 block text-xs font-medium">
-              Explore what’s possible with Max it
-            </span>
+          <span className="bg-primary flex flex-1 items-center gap-2 rounded-r-[45%] px-4 py-3">
+            <img src={lineIcon} alt="" className="size-9 shrink-0 object-contain" />
+            <span><span className="block text-xs font-bold text-white">Mobile, Fiber, Devices & More</span><span className="mt-1 block text-[10px] font-semibold text-black">Explore options in Max it</span></span>
           </span>
-          <span className="bg-background text-foreground grid size-10 shrink-0 place-items-center rounded-full">
-            <ArrowRight size={20} />
+          <span className="flex shrink-0 items-center gap-1 px-3 text-xs font-bold">
+            Buy Now <ArrowRight size={18} />
           </span>
         </button>
       </section>
@@ -120,27 +113,17 @@ export default function Home({
           Trending
         </SectionTitle>
         <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-1">
-          <article className="border-border bg-background flex min-h-36 w-[78%] shrink-0 flex-col justify-between rounded-2xl border p-4">
-            <Sparkles size={26} className="text-primary" />
-            <div>
-              <p className="text-primary text-[10px] font-bold tracking-widest">MADE FOR YOU</p>
-              <h3 className="mt-1 text-base leading-tight font-bold">
-                More of what
-                <br />
-                keeps you connected.
-              </h3>
-              <p className="text-muted-foreground mt-2 text-xs">Discover our latest offers</p>
+          <article className="border-border bg-background flex min-h-36 w-[75%] shrink-0 overflow-hidden rounded-xl border">
+            <img src={scholarshipsCampaign} alt="" className="w-1/2 object-cover object-right" />
+            <div className="flex flex-1 flex-col justify-center gap-2 p-3">
+              <h3 className="text-xs leading-tight font-bold">We’re bringing you one step closer</h3>
+              <p className="text-[10px] leading-tight">Discover opportunities for students with <span className="text-primary">Orange</span>.</p>
             </div>
           </article>
-          <article className="bg-lilac text-primary-foreground flex min-h-36 w-[60%] shrink-0 flex-col justify-between rounded-2xl p-4">
-            <Globe2 size={27} />
+          <article className="flex min-h-36 w-[60%] shrink-0 flex-col justify-between rounded-xl bg-white p-4 text-black">
+            <img src={orangeLogo} alt="" className="size-7 object-contain" />
             <div>
-              <p className="text-[10px] font-bold tracking-widest">EXPLORE MORE</p>
-              <h3 className="mt-1 text-base font-bold">
-                A world of
-                <br />
-                possibilities.
-              </h3>
+              <h3 className="mt-1 text-base font-bold">Your next upgrade awaits</h3>
             </div>
           </article>
         </div>

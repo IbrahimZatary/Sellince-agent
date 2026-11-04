@@ -52,7 +52,8 @@ export default function useChat({ onMessageSend } = {}) {
   }
 
   async function handleMessageSubmit() {
-    const submittedMessage = messageDraft.trim();
+    const submittedDraft = messageDraft;
+    const submittedMessage = submittedDraft.trim();
     if (!submittedMessage || isSubmissionPending.current) return;
     if (typeof onMessageSend !== "function") {
       setMessageSendError("Chat isn’t connected yet. Your message is saved in the box below.");
@@ -70,7 +71,7 @@ export default function useChat({ onMessageSend } = {}) {
       const customerMessage = createMessage("customer", submittedMessage);
       const replyMessage = createMessage("assistant", assistantMessage.content.trim());
       setConversationMessages((messages) => [...messages, customerMessage, replyMessage]);
-      setMessageDraft((draft) => (draft.trim() === submittedMessage ? "" : draft));
+      setMessageDraft((draft) => (draft === submittedDraft ? "" : draft));
     } catch {
       setMessageSendError("Your message couldn’t be sent. Please try again.");
     } finally {
